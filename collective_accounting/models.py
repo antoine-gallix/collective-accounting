@@ -20,10 +20,15 @@ class Group:
     accounts: list[Account] = field(default_factory=list)
     LEDGER_FILE = "ledger.pkl"
 
+    def export(self):
+        logger.info(f"exporting group to file: {self.LEDGER_FILE}")
+        with pathlib.Path(self.LEDGER_FILE).open("wb") as ledger_file:
+            pickle.dump(self, ledger_file)
+
     @classmethod
     def from_file(cls):
         logger.info(f"exporting group to file: {cls.LEDGER_FILE}")
-        with pathlib.Path(cls.LEDGER_FILE).open() as ledger_file:
+        with pathlib.Path(cls.LEDGER_FILE).open("rb") as ledger_file:
             return pickle.load(ledger_file)
 
     def as_dict(self):
@@ -37,11 +42,6 @@ class Group:
             logger.error("no account with name {name}")
             raise KeyError
         return account
-
-    def export(self):
-        logger.info(f"exporting group to file: {self.LEDGER_FILE}")
-        with pathlib.Path(self.LEDGER_FILE).open() as ledger_file:
-            pickle.dump(self, ledger_file)
 
     def add_account(self, name):
         logger.info(f"creating new account: {name!r}")

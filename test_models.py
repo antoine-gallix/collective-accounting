@@ -32,8 +32,14 @@ def group():
     return group
 
 
-def test__group__from_file():
-    raise NotImplementedError
+def test__export_import(group, mocker, tmp_path):
+    group.get("antoine").change_credit(10)
+    group.get("renan").change_credit(-10)
+    assert group.as_dict() == {"antoine": 10, "baptiste": 0, "renan": -10}
+    mocker.patch.object(Group, "LEDGER_FILE", tmp_path / Group.LEDGER_FILE)
+    group.export()
+    imported_group = Group.from_file()
+    assert imported_group.as_dict() == group.as_dict()
 
 
 def test__group__as_dict(group):
