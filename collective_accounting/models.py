@@ -28,8 +28,11 @@ class Group:
     @classmethod
     def import_(cls):
         logger.info(f"importing group from file: {cls.LEDGER_FILE}")
-        with pathlib.Path(cls.LEDGER_FILE).open("rb") as ledger_file:
-            return pickle.load(ledger_file)
+        try:
+            with pathlib.Path(cls.LEDGER_FILE).open("rb") as ledger_file:
+                return pickle.load(ledger_file)
+        except FileNotFoundError as e:
+            raise FileNotFoundError("could not find ledger file") from e
 
     def as_dict(self):
         return {account.name: account.credit for account in self.accounts}
