@@ -6,14 +6,18 @@ import sys
 main = click.Group()
 
 
-@main.command
-def show():
-    """Show ledger in it's current state"""
+def load_group():
     try:
-        group = collective_accounting.Group.import_()
+        return collective_accounting.Group.import_()
     except FileNotFoundError as e:
         logger.error(e)
         sys.exit()
+
+
+@main.command
+def show():
+    """Show ledger in it's current state"""
+    group = load_group()
     for account in group.accounts:
         print(account)
 
