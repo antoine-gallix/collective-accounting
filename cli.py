@@ -36,8 +36,3 @@ def show():
     for account in group.accounts:
         table.add_row(account.name, format_credit(account.credit))
     print(table)
-
-
-if __name__ == "__main__":
-    # call the main group
-    main()
