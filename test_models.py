@@ -38,7 +38,7 @@ def test__export_import(group, mocker, tmp_path):
     assert group.as_dict() == {"antoine": 10, "baptiste": 0, "renan": -10}
     mocker.patch.object(Group, "LEDGER_FILE", tmp_path / Group.LEDGER_FILE)
     group.export()
-    imported_group = Group.from_file()
+    imported_group = Group.import_()
     assert imported_group.as_dict() == group.as_dict()
 
 

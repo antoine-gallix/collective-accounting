@@ -26,8 +26,8 @@ class Group:
             pickle.dump(self, ledger_file)
 
     @classmethod
-    def from_file(cls):
-        logger.info(f"exporting group to file: {cls.LEDGER_FILE}")
+    def import_(cls):
+        logger.info(f"importing group from file: {cls.LEDGER_FILE}")
         with pathlib.Path(cls.LEDGER_FILE).open("rb") as ledger_file:
             return pickle.load(ledger_file)
 
