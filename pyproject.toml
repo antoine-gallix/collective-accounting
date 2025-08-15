@@ -10,4 +10,7 @@ dependencies = ["click>=8.2.1", "funcy>=2.0", "loguru>=0.7.3", "rich>=14.1.0"]
 dev = ["pytest>=8.4.1", "pytest-mock>=3.14.1"]
 
 [project.scripts]
-accountant = "cli:main"
+accountant = "collective_accounting.cli:main"
+
+[tool.uv]
+package = true # required for scripts to be installed
