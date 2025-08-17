@@ -36,41 +36,47 @@ def group():
 
 
 def test__file_IO(group, mocker, tmp_path):
-    group._get_one("antoine").change_credit(10)
-    group.get_one("renan").change_credit(-10)
-    assert group.as_dict() == {"antoine": 10, "baptiste": 0, "renan": -10}
+    group.add_shared_expense("antoine", 12)
+    assert group.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
     mocker.patch.object(Ledger, "LEDGER_FILE", tmp_path / Ledger.LEDGER_FILE)
     group.save_to_file()
     imported_group = Ledger.load_from_file()
     assert imported_group.as_dict() == group.as_dict()
 
 
-def test__group__as_dict(group):
+def test__Ledger__as_dict(group):
     assert group.as_dict() == {"antoine": 0, "baptiste": 0, "renan": 0}
 
 
-def test__group__create():
+def test__Ledger__create():
     group = Ledger()
     assert group.as_dict() == {}
 
 
-def test__group__add_account():
-    g = Ledger()
-    antoine = g.add_account("antoine")
-    assert g.as_dict() == {"antoine": 0}
-    assert len(g.accounts) == 1
+def test__Ledger__add_account():
+    ledger = Ledger()
+    antoine = ledger.add_account("antoine")
+    assert ledger.as_dict() == {"antoine": 0}
+    assert len(ledger.accounts) == 1
     assert isinstance(antoine, Account)
     assert antoine.name == "antoine"
     assert antoine.credit == 0
-    nilou = g.add_account("nilou")
-    assert len(g.accounts) == 2
+    nilou = ledger.add_account("nilou")
+    assert len(ledger.accounts) == 2
     assert nilou.name == "nilou"
     assert nilou.credit == 0
 
-    assert g.as_dict() == {"antoine": 0, "nilou": 0}
+    assert ledger.as_dict() == {"antoine": 0, "nilou": 0}
 
 
-def test__group__get_one(group):
+def test__Ledger__add_account__unique_name():
+    ledger = Ledger()
+    ledger.add_account("antoine")
+    with pytest.raises(ValueError):
+        ledger.add_account("antoine")
+
+
+def test__Ledger__get_one(group):
     antoine = group.get_one("antoine")
     assert isinstance(antoine, Account)
     assert antoine.name == "antoine"
@@ -79,7 +85,7 @@ def test__group__get_one(group):
         group.get_one("finn")
 
 
-def test__group__get(group):
+def test__Ledger__get(group):
     # one
     group.get("antoine") == group.get_one("antoine")
     # one that does not exist

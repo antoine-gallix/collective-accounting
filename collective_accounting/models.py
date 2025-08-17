@@ -44,13 +44,7 @@ class Ledger:
         return {account.name: account.credit for account in self.accounts}
 
     # Account Management
-    def add_account(self, name: str) -> None:
-        logger.info(f"creating new account: {name!r}")
-        account = Account(name)
-        self.accounts.append(account)
-        return account
 
-    # Accessing accounts
     def _get_one(self, name: str) -> Account:
         """Get account by name"""
         account = funcy.first(
@@ -70,6 +64,16 @@ class Ledger:
                 return [self._get_one(account)]
             case [*names]:
                 return [self._get_one(name) for name in names]
+
+    def add_account(self, name: str) -> None:
+        logger.info(f"creating new account: {name!r}")
+        try:
+            self._get_one(name)
+            raise ValueError(f"account named {name!r} already exist")
+        except KeyError:
+            account = Account(name)
+            self.accounts.append(account)
+            return account
 
     # Changing balances
 
