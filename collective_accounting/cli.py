@@ -1,7 +1,6 @@
 import sys
 
 import click
-import funcy
 from rich import print
 from rich.table import Table
 from rich.text import Text
