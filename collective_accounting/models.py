@@ -3,6 +3,10 @@ from .logging import logger
 import funcy
 import pickle
 import pathlib
+from typing import Literal
+
+type AccountSelector = Literal["ALL"] | str | list[str]
+type Amount = int | float
 
 
 @dataclass
@@ -11,22 +15,24 @@ class Account:
     credit: float = 0
 
     def change_credit(self, change: int | float):
-        logger.info(f"applying {change:+.2f} credit change to account {self.name!r}")
+        logger.info(f"credit change: {self.name!r} {change:+.2f}")
         self.credit += change
 
 
 @dataclass
-class Group:
+class Ledger:
     accounts: list[Account] = field(default_factory=list)
     LEDGER_FILE = "ledger.pkl"
 
-    def export(self):
+    # IOs
+
+    def save_to_file(self) -> None:
         logger.info(f"exporting group to file: {self.LEDGER_FILE}")
         with pathlib.Path(self.LEDGER_FILE).open("wb") as ledger_file:
             pickle.dump(self, ledger_file)
 
     @classmethod
-    def import_(cls):
+    def load_from_file(cls):
         logger.info(f"importing group from file: {cls.LEDGER_FILE}")
         try:
             with pathlib.Path(cls.LEDGER_FILE).open("rb") as ledger_file:
@@ -34,31 +40,55 @@ class Group:
         except FileNotFoundError as e:
             raise FileNotFoundError("could not find ledger file") from e
 
-    def as_dict(self):
+    def as_dict(self) -> dict:
         return {account.name: account.credit for account in self.accounts}
 
-    def get(self, name):
-        account = funcy.first(
-            funcy.filter(lambda account: account.name == name, self.accounts)
-        )
-        if not account:
-            logger.error("no account with name {name}")
-            raise KeyError
-        return account
-
-    def add_account(self, name):
+    # Account Management
+    def add_account(self, name: str) -> None:
         logger.info(f"creating new account: {name!r}")
         account = Account(name)
         self.accounts.append(account)
         return account
 
-    def add_shared_expense(self, name, value):
-        logger.info(f"add shared expense of {value} from: {name!r}")
-        credited_account, debited_accounts = funcy.lsplit(
-            lambda account: account.name == name, self.accounts
+    # Accessing accounts
+    def _get_one(self, name: str) -> Account:
+        """Get account by name"""
+        account = funcy.first(
+            funcy.filter(lambda account: account.name == name, self.accounts)
         )
-        individual_share = value / len(self.accounts)
-        logger.debug("individual share of the expense: ")
-        credited_account[0].change_credit(value - individual_share)
-        for debited_account in debited_accounts:
-            debited_account.change_credit(-individual_share)
+        if not account:
+            logger.error(f"no account with name {name}")
+            raise KeyError
+        return account
+
+    def get(self, selector: AccountSelector) -> list[Account]:
+        """Get accounts"""
+        match selector:
+            case "ALL":
+                return self.accounts
+            case str(account):
+                return [self._get_one(account)]
+            case [*names]:
+                return [self._get_one(name) for name in names]
+
+    # Changing balances
+
+    def _credit(
+        self,
+        value: Amount,
+        credit_to: AccountSelector = "ALL",
+        debt_from: AccountSelector = "ALL",
+    ) -> None:
+        """Main function to change balance of accounts"""
+        creditors = self.get(credit_to)
+        debitors = self.get(debt_from)
+        credited_value = value / len(creditors)
+        for creditor in creditors:
+            creditor.change_credit(credited_value)
+        debited_value = value / len(debitors)
+        for debitor in debitors:
+            debitor.change_credit(-debited_value)
+
+    def add_shared_expense(self, name: str, amount: Amount):
+        logger.info(f"adding shared expense: {name!r} paid {amount} for all")
+        self._credit(amount, credit_to=name)

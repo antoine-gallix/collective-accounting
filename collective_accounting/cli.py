@@ -11,7 +11,7 @@ main = click.Group()
 
 def load_group():
     try:
-        return collective_accounting.Group.import_()
+        return collective_accounting.Ledger.load_from_file()
     except FileNotFoundError as e:
         logger.error(e)
         sys.exit()
@@ -36,3 +36,19 @@ def show():
     for account in group.accounts:
         table.add_row(account.name, format_credit(account.credit))
     print(table)
+
+
+@main.command
+def add_user(name):
+    raise NotImplementedError
+    group = load_group()
+    ...
+    group.export()
+
+
+@main.command
+def add_shared_expense():
+    raise NotImplementedError
+    group = load_group()
+    ...
+    group.export()
