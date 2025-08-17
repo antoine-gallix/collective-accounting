@@ -21,7 +21,7 @@ def load_ledger():
 
 
 def format_credit(credit):
-    formated = Text(f"{credit:+}")
+    formated = Text(f"{credit:+.2f}")
     if credit > 0:
         formated.style = "green"
     elif credit < 0:
