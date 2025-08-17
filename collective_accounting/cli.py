@@ -1,17 +1,19 @@
 import sys
 
 import click
+import funcy
 from rich import print
 from rich.table import Table
 from rich.text import Text
 
 import collective_accounting
 from collective_accounting import logger
+from collective_accounting.models import Ledger
 
 main = click.Group()
 
 
-def load_group():
+def load_ledger():
     try:
         return collective_accounting.Ledger.load_from_file()
     except FileNotFoundError as e:
@@ -28,10 +30,21 @@ def format_credit(credit):
     return formated
 
 
+# --------------------------------
+
+
+@main.command
+def init():
+    """Create a new empty ledger"""
+    logger.info("creating new ledger")
+    ledger = Ledger()
+    ledger.save_to_file()
+
+
 @main.command
 def show():
     """Show ledger in it's current state"""
-    group = load_group()
+    group = load_ledger()
     table = Table(title="Ledger")
     table.add_column("Account")
     table.add_column("Balance")
@@ -41,16 +54,16 @@ def show():
 
 
 @main.command
+@click.argument("name", type=click.STRING)
 def add_user(name):
-    raise NotImplementedError
-    group = load_group()
-    ...
-    group.export()
+    try:
+        with Ledger.edit() as ledger:
+            ledger.add_account(name)
+    except ValueError as error:
+        logger.error(error)
 
 
 @main.command
 def add_shared_expense():
-    raise NotImplementedError
-    group = load_group()
-    ...
-    group.export()
+    with Ledger.edit() as ledger:
+        ledger.add_account(name)
