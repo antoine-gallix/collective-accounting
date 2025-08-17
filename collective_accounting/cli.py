@@ -42,7 +42,7 @@ def init():
 
 @main.command
 def show():
-    """Show ledger in it's current state"""
+    """Print the content of the ledger file"""
     group = load_ledger()
     table = Table(title="Ledger")
     table.add_column("Account")
@@ -55,6 +55,7 @@ def show():
 @main.command
 @click.argument("name", type=click.STRING)
 def add_user(name):
+    """Adds a user to the ledger"""
     try:
         with Ledger.edit() as ledger:
             ledger.add_account(name)
@@ -63,6 +64,16 @@ def add_user(name):
 
 
 @main.command
-def add_shared_expense():
+@click.argument("amount", type=click.FLOAT)
+@click.argument("name", type=click.STRING)
+def add_shared_expense(amount, name):
+    """Record an expense made by a user for the whole group
+
+    Rebalance the ledger so to share the cost of AMOUNT paid by NAME
+
+    Example:
+
+    > accountant add-shared-expense 25 antoine
+    """
     with Ledger.edit() as ledger:
-        ledger.add_account(name)
+        ledger.add_shared_expense(by=name, amount=amount)
