@@ -2,7 +2,7 @@ import pytest
 
 from collective_accounting.models import Account, Ledger
 
-# Account
+# ------------------------ Account ------------------------
 
 
 def test__account__create():
@@ -19,39 +19,58 @@ def test__account__change_credit():
     assert a.credit == -3
 
 
-# apply change to credit
-
-# Group
+# ------------------------ Ledger ------------------------
 
 
 @pytest.fixture
-def group():
-    group = Ledger()
-    group.add_account("antoine")
-    group.add_account("baptiste")
-    group.add_account("renan")
-    return group
-
-
-# IOs
-
-
-def test__file_IO(group, mocker, tmp_path):
-    group.add_shared_expense("antoine", 12)
-    assert group.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
+def tmp_ledger_file(mocker, tmp_path):
     mocker.patch.object(Ledger, "LEDGER_FILE", tmp_path / Ledger.LEDGER_FILE)
-    group.save_to_file()
-    imported_group = Ledger.load_from_file()
-    assert imported_group.as_dict() == group.as_dict()
 
 
-def test__Ledger__as_dict(group):
-    assert group.as_dict() == {"antoine": 0, "baptiste": 0, "renan": 0}
+@pytest.fixture
+def new_ledger():
+    ledger = Ledger()
+    ledger.add_account("antoine")
+    ledger.add_account("baptiste")
+    ledger.add_account("renan")
+    return ledger
+
+
+@pytest.fixture
+def ledger(new_ledger):
+    new_ledger.add_shared_expense(amount=12, by="antoine")
+    return new_ledger
+
+
+@pytest.fixture
+def saved_ledger(ledger, tmp_ledger_file):
+    ledger.save_to_file()
+    return ledger
+
+
+# --------
 
 
 def test__Ledger__create():
     group = Ledger()
     assert group.as_dict() == {}
+
+
+def test__Ledger__as_dict(ledger):
+    assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
+
+
+# -------- IOs
+
+
+def test__Ledger__file_IO(ledger, mocker, tmp_path):
+    assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
+    ledger.save_to_file()
+    loaded_ledger = Ledger.load_from_file()
+    assert loaded_ledger.as_dict() == ledger.as_dict()
+
+
+# -------- Accounts management
 
 
 def test__Ledger__add_account():
@@ -77,63 +96,74 @@ def test__Ledger__add_account__unique_name():
         ledger.add_account("antoine")
 
 
-def test__Ledger__get_one(group):
-    antoine = group.get_one("antoine")
+def test__Ledger__get_one(ledger):
+    antoine = ledger._get_one("antoine")
     assert isinstance(antoine, Account)
     assert antoine.name == "antoine"
-    assert antoine.credit == 0
+    assert antoine.credit == 8
     with pytest.raises(KeyError):
-        group.get_one("finn")
+        ledger._get_one("finn")
 
 
-def test__Ledger__get(group):
+def test__Ledger__get(ledger):
     # one
-    group.get("antoine") == group.get_one("antoine")
+    ledger.get("antoine") == ledger.get("antoine")
+
     # one that does not exist
     with pytest.raises(KeyError):
-        group.get("god")
+        ledger.get("god")
+
     # list
-    assert group.get(["antoine", "renan"]) == [Account("antoine"), Account("renan")]
+    assert ledger.get(["antoine", "renan"]) == [
+        Account("antoine", credit=8),
+        Account("renan", credit=-4),
+    ]
     # list with one that does not exist
     with pytest.raises(KeyError):
-        group.get(["jesus", "renan"])
+        ledger.get(["jesus", "renan"])
+
     # all
-    assert group.get("ALL") == [
-        Account("antoine"),
-        Account("baptiste"),
-        Account("renan"),
+    assert ledger.get("ALL") == [
+        Account("antoine", credit=8),
+        Account("baptiste", credit=-4),
+        Account("renan", credit=-4),
     ]
 
 
 # balance operation
 
 
-def test__change_balances__to_one_from_one(group):
-    group.credit(10, credit_to="antoine", debt_from="baptiste")
-    assert group.as_dict() == {"antoine": 10.0, "baptiste": -10.0, "renan": 0}
+def test__Ledger__change_balances__to_one_from_one(ledger):
+    assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
+    ledger._credit(10, credit_to="antoine", debt_from="baptiste")
+    assert ledger.as_dict() == {"antoine": 18, "baptiste": -14, "renan": -4}
 
 
-def test__change_balances__to_one_from_list(group):
-    group.credit(10, credit_to="antoine", debt_from=["baptiste", "renan"])
-    assert group.as_dict() == {"antoine": 10.0, "baptiste": -5, "renan": -5}
+def test__Ledger__change_balances__to_one_from_list(ledger):
+    assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
+    ledger._credit(10, credit_to="antoine", debt_from=["baptiste", "renan"])
+    assert ledger.as_dict() == {"antoine": 18, "baptiste": -9, "renan": -9}
 
 
-def test__change_balances__to_one_from_all(group):
-    group.credit(12, credit_to="antoine", debt_from="ALL")
-    assert group.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
+def test__Ledger__change_balances__to_one_from_all(ledger):
+    assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
+    ledger._credit(12, credit_to="antoine", debt_from="ALL")
+    assert ledger.as_dict() == {"antoine": 16, "baptiste": -8, "renan": -8}
 
 
-def test__change_balances__to_two_from_one(group):
-    group.credit(12, credit_to=["antoine", "renan"], debt_from="baptiste")
-    assert group.as_dict() == {"antoine": 6, "baptiste": -12, "renan": 6}
+def test__Ledger__change_balances__to_two_from_one(ledger):
+    assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
+    ledger._credit(12, credit_to=["antoine", "renan"], debt_from="baptiste")
+    assert ledger.as_dict() == {"antoine": 14, "baptiste": -16, "renan": 2}
 
 
-def test__change_balances__to_all_from_one(group):
-    group.credit(12, credit_to="ALL", debt_from="antoine")
-    assert group.as_dict() == {"antoine": -8, "baptiste": 4, "renan": 4}
+def test__Ledger__change_balances__to_all_from_one(ledger):
+    assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
+    ledger._credit(12, credit_to="ALL", debt_from="antoine")
+    assert ledger.as_dict() == {"antoine": 0, "baptiste": 0, "renan": 0}
 
 
-def test__group__shared_credit(group):
-    assert group.as_dict() == {"antoine": 0, "baptiste": 0, "renan": 0}
-    group.add_shared_expense("antoine", 9)
-    assert group.as_dict() == {"antoine": 6.0, "baptiste": -3.0, "renan": -3.0}
+def test__Ledger__add_shared_expense(ledger):
+    assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
+    ledger.add_shared_expense("antoine", 9)
+    assert ledger.as_dict() == {"antoine": 14, "baptiste": -7, "renan": -7}

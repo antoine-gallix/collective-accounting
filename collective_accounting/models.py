@@ -1,5 +1,6 @@
 import pathlib
 import pickle
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -26,6 +27,9 @@ class Ledger:
     accounts: list[Account] = field(default_factory=list)
     LEDGER_FILE = "ledger.pkl"
 
+    def as_dict(self) -> dict:
+        return {account.name: account.credit for account in self.accounts}
+
     # IOs
 
     def save_to_file(self) -> None:
@@ -42,8 +46,12 @@ class Ledger:
         except FileNotFoundError as e:
             raise FileNotFoundError("could not find ledger file") from e
 
-    def as_dict(self) -> dict:
-        return {account.name: account.credit for account in self.accounts}
+    @classmethod
+    @contextmanager
+    def edit(cls):
+        ledger = cls.load_from_file()
+        yield ledger
+        ledger.save_to_file()
 
     # Account Management
 
@@ -95,6 +103,6 @@ class Ledger:
         for debitor in debitors:
             debitor.change_credit(-debited_value)
 
-    def add_shared_expense(self, name: str, amount: Amount):
-        logger.info(f"adding shared expense: {name!r} paid {amount} for all")
-        self._credit(amount, credit_to=name)
+    def add_shared_expense(self, by: str, amount: Amount):
+        logger.info(f"adding shared expense: {by!r} paid {amount} for all")
+        self._credit(amount, credit_to=by)
