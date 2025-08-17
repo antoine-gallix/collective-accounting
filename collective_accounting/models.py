@@ -48,7 +48,7 @@ class Ledger:
 
     @classmethod
     @contextmanager
-    def edit(cls):
+    def edit(cls) -> Self:
         ledger = cls.load_from_file()
         yield ledger
         ledger.save_to_file()
