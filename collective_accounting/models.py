@@ -33,13 +33,13 @@ class Ledger:
     # IOs
 
     def save_to_file(self) -> None:
-        logger.info(f"exporting group to file: {self.LEDGER_FILE}")
+        logger.info(f"writing ledger to file: {self.LEDGER_FILE}")
         with pathlib.Path(self.LEDGER_FILE).open("wb") as ledger_file:
             pickle.dump(self, ledger_file)
 
     @classmethod
     def load_from_file(cls):
-        logger.info(f"importing group from file: {cls.LEDGER_FILE}")
+        logger.info(f"loading ledger from file: {cls.LEDGER_FILE}")
         try:
             with pathlib.Path(cls.LEDGER_FILE).open("rb") as ledger_file:
                 return pickle.load(ledger_file)
