@@ -2,7 +2,7 @@ import pathlib
 import pickle
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Literal, Self
 
 import funcy
 
