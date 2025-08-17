@@ -61,8 +61,7 @@ class Ledger:
             funcy.filter(lambda account: account.name == name, self.accounts)
         )
         if not account:
-            logger.error(f"no account with name {name}")
-            raise KeyError
+            raise KeyError(f"no account with name {name}")
         return account
 
     def get(self, selector: AccountSelector) -> list[Account]:
