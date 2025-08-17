@@ -1,5 +1,6 @@
-from collective_accounting.models import Account, Ledger
 import pytest
+
+from collective_accounting.models import Account, Ledger
 
 # Account
 

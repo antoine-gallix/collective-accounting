@@ -1,10 +1,12 @@
-import click
-import collective_accounting
-from collective_accounting import logger
 import sys
+
+import click
 from rich import print
 from rich.table import Table
 from rich.text import Text
+
+import collective_accounting
+from collective_accounting import logger
 
 main = click.Group()
 
