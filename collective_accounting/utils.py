@@ -25,14 +25,6 @@ def divide(amount: Decimal, denominator: Decimal) -> (Decimal, Decimal):
 # ------------------------ ledger file ------------------------
 
 
-def safe_load_ledger():
-    try:
-        return collective_accounting.Ledger.load_from_file()
-    except FileNotFoundError as e:
-        logger.error(e)
-        sys.exit()
-
-
 @funcy.ignore(FileNotFoundError)
 def timestamp(path):
     return pathlib.Path(path).stat().st_mtime
@@ -54,7 +46,7 @@ def build_ledger_table():
     try:
         ledger = collective_accounting.Ledger.load_from_file()
     except FileNotFoundError:
-        return Text("no ledger file")
+        return Text("no ledger file", style="red")
     table = Table(title="Ledger")
     table.add_column("Account")
     table.add_column("Balance")
