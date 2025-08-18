@@ -52,8 +52,8 @@ def saved_ledger(ledger, tmp_ledger_file):
 
 
 def test__Ledger__create():
-    group = Ledger()
-    assert group.as_dict() == {}
+    ledger = Ledger()
+    assert ledger.as_dict() == {}
 
 
 def test__Ledger__as_dict(ledger):
