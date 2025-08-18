@@ -1,5 +1,4 @@
 import pathlib
-import sys
 from decimal import Decimal
 
 import funcy
@@ -7,7 +6,6 @@ from rich.table import Table
 from rich.text import Text
 
 import collective_accounting
-from collective_accounting import logger
 
 # ------------------------ decimal ------------------------
 
