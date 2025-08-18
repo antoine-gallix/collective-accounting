@@ -53,14 +53,31 @@ def add_user(name):
 @main.command
 @click.argument("amount", type=click.FLOAT)
 @click.argument("name", type=click.STRING)
-def add_shared_expense(amount, name):
+def record_shared_expense(amount, name):
     """Record an expense made by a user for the whole group
 
     Rebalance the ledger so to share the cost of AMOUNT paid by NAME
 
     Example:
 
-    > accountant add-shared-expense 25 antoine
+    > accountant record-shared-expense 25 antoine
     """
     with Ledger.edit() as ledger:
-        ledger.add_shared_expense(by=name, amount=amount)
+        ledger.record_shared_expense(amount=amount, by=name)
+
+
+@main.command
+@click.argument("amount", type=click.FLOAT)
+@click.argument("by", type=click.STRING)
+@click.argument("to", type=click.STRING)
+def record_transfer(amount, by, to):
+    """Record money transfered from a user to another
+
+    Rebalance the ledger so to share the cost of AMOUNT paid by NAME
+
+    Example:
+
+    > accountant record-transfer 10 baptiste antoine
+    """
+    with Ledger.edit() as ledger:
+        ledger.record_transfer(amount=amount, by=by, to=to)

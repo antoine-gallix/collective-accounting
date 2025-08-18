@@ -38,7 +38,7 @@ def new_ledger():
 
 @pytest.fixture
 def ledger(new_ledger):
-    new_ledger.add_shared_expense(amount=12, by="antoine")
+    new_ledger.record_shared_expense(amount=12, by="antoine")
     return new_ledger
 
 
@@ -73,7 +73,7 @@ def test__Ledger__file_IO(ledger, mocker, tmp_path):
 def test__Ledger__context_manager(saved_ledger):
     assert saved_ledger.as_dict() == {"antoine": 8.0, "baptiste": -4.0, "renan": -4.0}
     with Ledger.edit() as managed_ledger:
-        managed_ledger.add_shared_expense(amount=21, by="antoine")
+        managed_ledger.recor_shared_expense(amount=21, by="antoine")
     loaded_ledger = Ledger.load_from_file()
     assert loaded_ledger.as_dict() == {
         "antoine": 22.0,
@@ -175,7 +175,13 @@ def test__Ledger__change_balances__to_all_from_one(ledger):
     assert ledger.as_dict() == {"antoine": 0, "baptiste": 0, "renan": 0}
 
 
-def test__Ledger__add_shared_expense(ledger):
+def test__Ledger__record_shared_expense(ledger):
     assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
-    ledger.add_shared_expense("antoine", 9)
+    ledger.record_shared_expense(9, "antoine")
     assert ledger.as_dict() == {"antoine": 14, "baptiste": -7, "renan": -7}
+
+
+def test__Ledger__record_transfer(ledger):
+    assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
+    ledger.record_transfer(4, "baptiste", "antoine")
+    assert ledger.as_dict() == {"antoine": 4, "baptiste": 0, "renan": -4}

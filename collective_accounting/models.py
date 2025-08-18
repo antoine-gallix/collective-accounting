@@ -102,6 +102,15 @@ class Ledger:
         for debitor in debitors:
             debitor.change_balance(-debited_value)
 
-    def add_shared_expense(self, by: str, amount: Amount):
-        logger.info(f"adding shared expense: {by!r} paid {amount} for all")
+    def record_shared_expense(self, amount: Amount, by: str):
+        logger.info(f"recording shared expense: {by!r} paid {amount} for all")
         self._credit(amount, credit_to=by)
+
+    def record_transfer(
+        self,
+        amount: Amount,
+        by: str,
+        to: str,
+    ):
+        logger.info(f"recording transfer: {by!r} send {amount} to {to!r}")
+        self._credit(amount, credit_to=by, debt_from=to)

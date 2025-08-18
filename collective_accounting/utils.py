@@ -41,7 +41,7 @@ def timestamp(path):
 # ------------------------ display ------------------------
 
 
-def format_credit(credit):
+def format_balance(credit):
     formated = Text(f"{credit:+.2f}")
     if credit > 0:
         formated.style = "green"
@@ -56,5 +56,5 @@ def build_ledger_table():
     table.add_column("Account")
     table.add_column("Balance")
     for account in ledger.accounts:
-        table.add_row(account.name, format_credit(account.credit))
+        table.add_row(account.name, format_balance(account.balance))
     return table
