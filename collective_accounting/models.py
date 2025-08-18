@@ -15,11 +15,11 @@ type Amount = int | float
 @dataclass
 class Account:
     name: str
-    credit: float = 0
+    balance: float = 0
 
     def change_credit(self, change: int | float):
         logger.info(f"credit change: {self.name!r} {change:+.2f}")
-        self.credit += change
+        self.balance += change
 
 
 @dataclass
@@ -28,7 +28,7 @@ class Ledger:
     LEDGER_FILE = "ledger.pkl"
 
     def as_dict(self) -> dict:
-        return {account.name: account.credit for account in self.accounts}
+        return {account.name: account.balance for account in self.accounts}
 
     # IOs
 

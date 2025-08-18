@@ -7,16 +7,16 @@ from collective_accounting.models import Account, Ledger
 
 def test__account__create():
     a = Account("antoine")
-    assert a.credit == 0
+    assert a.balance == 0
 
 
 def test__account__change_credit():
     a = Account("antoine")
-    assert a.credit == 0
+    assert a.balance == 0
     a.change_credit(5)
-    assert a.credit == 5
+    assert a.balance == 5
     a.change_credit(-8)
-    assert a.credit == -3
+    assert a.balance == -3
 
 
 # ------------------------ Ledger ------------------------
@@ -92,11 +92,11 @@ def test__Ledger__add_account():
     assert len(ledger.accounts) == 1
     assert isinstance(antoine, Account)
     assert antoine.name == "antoine"
-    assert antoine.credit == 0
+    assert antoine.balance == 0
     nilou = ledger.add_account("nilou")
     assert len(ledger.accounts) == 2
     assert nilou.name == "nilou"
-    assert nilou.credit == 0
+    assert nilou.balance == 0
 
     assert ledger.as_dict() == {"antoine": 0, "nilou": 0}
 
@@ -112,7 +112,7 @@ def test__Ledger__get_one(ledger):
     antoine = ledger._get_one("antoine")
     assert isinstance(antoine, Account)
     assert antoine.name == "antoine"
-    assert antoine.credit == 8
+    assert antoine.balance == 8
     with pytest.raises(KeyError):
         ledger._get_one("finn")
 
@@ -127,8 +127,8 @@ def test__Ledger__get(ledger):
 
     # list
     assert ledger.get(["antoine", "renan"]) == [
-        Account("antoine", credit=8),
-        Account("renan", credit=-4),
+        Account("antoine", balance=8),
+        Account("renan", balance=-4),
     ]
     # list with one that does not exist
     with pytest.raises(KeyError):
@@ -136,9 +136,9 @@ def test__Ledger__get(ledger):
 
     # all
     assert ledger.get("ALL") == [
-        Account("antoine", credit=8),
-        Account("baptiste", credit=-4),
-        Account("renan", credit=-4),
+        Account("antoine", balance=8),
+        Account("baptiste", balance=-4),
+        Account("renan", balance=-4),
     ]
 
 
