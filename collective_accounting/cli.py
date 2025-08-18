@@ -1,37 +1,14 @@
-import sys
 import time
 
 import click
 from rich import print
 from rich.live import Live
-from rich.table import Table
-from rich.text import Text
 
-import collective_accounting
 from collective_accounting import logger
 from collective_accounting.models import Ledger
+from collective_accounting.utils import build_ledger_table
 
 main = click.Group()
-
-
-def load_ledger():
-    try:
-        return collective_accounting.Ledger.load_from_file()
-    except FileNotFoundError as e:
-        logger.error(e)
-        sys.exit()
-
-
-def format_credit(credit):
-    formated = Text(f"{credit:+.2f}")
-    if credit > 0:
-        formated.style = "green"
-    elif credit < 0:
-        formated.style = "red"
-    return formated
-
-
-# --------------------------------
 
 
 @main.command
@@ -40,16 +17,6 @@ def init():
     logger.info("creating new ledger")
     ledger = Ledger()
     ledger.save_to_file()
-
-
-def build_ledger_table():
-    ledger = load_ledger()
-    table = Table(title="Ledger")
-    table.add_column("Account")
-    table.add_column("Balance")
-    for account in ledger.accounts:
-        table.add_row(account.name, format_credit(account.credit))
-    return table
 
 
 @main.command
