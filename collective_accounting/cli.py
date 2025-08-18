@@ -1,4 +1,5 @@
 import time
+from operator import xor
 
 import click
 from rich import print
@@ -34,7 +35,11 @@ def watch():
     with Live(build_ledger_table(), screen=True, auto_refresh=False) as live:
         while True:
             time.sleep(0.25)
-            if new_timestamp := timestamp(Ledger.LEDGER_FILE) > last_timestamp:
+            new_timestamp = timestamp(Ledger.LEDGER_FILE)
+            # one of the two timestamp is None: ledger just got deleted or created
+            if xor(last_timestamp is None, new_timestamp is None) or (
+                (last_timestamp and new_timestamp) and new_timestamp > last_timestamp
+            ):
                 last_timestamp = new_timestamp
                 live.update(build_ledger_table(), refresh=True)
 

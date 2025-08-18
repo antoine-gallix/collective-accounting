@@ -51,7 +51,10 @@ def format_balance(credit):
 
 
 def build_ledger_table():
-    ledger = safe_load_ledger()
+    try:
+        ledger = collective_accounting.Ledger.load_from_file()
+    except FileNotFoundError:
+        return Text("no ledger file")
     table = Table(title="Ledger")
     table.add_column("Account")
     table.add_column("Balance")
