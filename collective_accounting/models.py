@@ -17,7 +17,7 @@ class Account:
     name: str
     balance: float = 0
 
-    def change_credit(self, change: int | float):
+    def change_balance(self, change: int | float):
         logger.info(f"credit change: {self.name!r} {change:+.2f}")
         self.balance += change
 
@@ -97,10 +97,10 @@ class Ledger:
         debitors = self.get(debt_from)
         credited_value = value / len(creditors)
         for creditor in creditors:
-            creditor.change_credit(credited_value)
+            creditor.change_balance(credited_value)
         debited_value = value / len(debitors)
         for debitor in debitors:
-            debitor.change_credit(-debited_value)
+            debitor.change_balance(-debited_value)
 
     def add_shared_expense(self, by: str, amount: Amount):
         logger.info(f"adding shared expense: {by!r} paid {amount} for all")

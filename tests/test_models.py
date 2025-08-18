@@ -13,9 +13,9 @@ def test__account__create():
 def test__account__change_credit():
     a = Account("antoine")
     assert a.balance == 0
-    a.change_credit(5)
+    a.change_balance(5)
     assert a.balance == 5
-    a.change_credit(-8)
+    a.change_balance(-8)
     assert a.balance == -3
 
 
