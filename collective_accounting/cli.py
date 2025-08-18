@@ -1,7 +1,9 @@
 import sys
+import time
 
 import click
 from rich import print
+from rich.live import Live
 from rich.table import Table
 from rich.text import Text
 
@@ -40,16 +42,33 @@ def init():
     ledger.save_to_file()
 
 
-@main.command
-def show():
-    """Print the content of the ledger file"""
-    group = load_ledger()
+def build_ledger_table():
+    ledger = load_ledger()
     table = Table(title="Ledger")
     table.add_column("Account")
     table.add_column("Balance")
-    for account in group.accounts:
+    for account in ledger.accounts:
         table.add_row(account.name, format_credit(account.credit))
+    return table
+
+
+@main.command
+def show():
+    """Print the content of the ledger file"""
+    table = build_ledger_table()
     print(table)
+
+
+@main.command
+def watch():
+    """Print the content of the ledger file"""
+    logger.remove()
+    with Live(
+        build_ledger_table(), screen=True, auto_refresh=False, redirect_stdout=True
+    ) as live:
+        while True:
+            time.sleep(0.25)
+            live.update(build_ledger_table(), refresh=True)
 
 
 @main.command
