@@ -22,9 +22,35 @@ class Account:
         self.balance += change
 
 
+type Changes = dict[Account, Amount]
+
+
+class Operation:
+    def __init__(
+        self, amount: Amount, credit_to: list[Account], debt_from: list[Account]
+    ) -> Changes:
+        individual_credit = amount / len(credit_to)
+        individual_debt = amount / len(debt_from)
+        self.changes = {creditor: individual_credit for creditor in credit_to} | {
+            debitor: individual_debt for debitor in credit_to
+        }
+        self.tag = "Generic Operation"
+
+    def apply(self) -> None:
+        logger.info(f"applying operation: {self.tag}")
+        for account, amount in self.items:
+            account.change_balance(amount)
+
+    def revert(self) -> None:
+        logger.info(f"reverting operation: {self.tag}")
+        for account, amount in self.items:
+            account.change_balance(-amount)
+
+
 @dataclass
 class Ledger:
     accounts: list[Account] = field(default_factory=list)
+    operations: list[Operation] = field(default_factory=list)
     LEDGER_FILE = "ledger.pkl"
 
     def as_dict(self) -> dict:
