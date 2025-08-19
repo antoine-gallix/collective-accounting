@@ -175,33 +175,52 @@ def test__Ledger__get(ledger):
 # balance operation
 
 
-def test__Ledger__change_balances__to_one_from_one(ledger):
+def test__Ledger__add_operation__to_one_from_one(ledger):
     assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
-    ledger._credit(10, credit_to="antoine", debt_from="baptiste")
+    operation = Operation(
+        amount=10, credit_to=ledger.get("antoine"), debt_from=ledger.get("baptiste")
+    )
+    ledger._record_operation(operation)
     assert ledger.as_dict() == {"antoine": 18, "baptiste": -14, "renan": -4}
 
 
 def test__Ledger__change_balances__to_one_from_list(ledger):
     assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
-    ledger._credit(10, credit_to="antoine", debt_from=["baptiste", "renan"])
+    operation = Operation(
+        amount=10,
+        credit_to=ledger.get("antoine"),
+        debt_from=ledger.get(["baptiste", "renan"]),
+    )
+    ledger._record_operation(operation)
     assert ledger.as_dict() == {"antoine": 18, "baptiste": -9, "renan": -9}
 
 
 def test__Ledger__change_balances__to_one_from_all(ledger):
     assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
-    ledger._credit(12, credit_to="antoine", debt_from="ALL")
+    operation = Operation(
+        amount=12, credit_to=ledger.get("antoine"), debt_from=ledger.get("ALL")
+    )
+    ledger._record_operation(operation)
     assert ledger.as_dict() == {"antoine": 16, "baptiste": -8, "renan": -8}
 
 
 def test__Ledger__change_balances__to_two_from_one(ledger):
     assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
-    ledger._credit(12, credit_to=["antoine", "renan"], debt_from="baptiste")
+    operation = Operation(
+        amount=12,
+        credit_to=ledger.get(["antoine", "renan"]),
+        debt_from=ledger.get("baptiste"),
+    )
+    ledger._record_operation(operation)
     assert ledger.as_dict() == {"antoine": 14, "baptiste": -16, "renan": 2}
 
 
 def test__Ledger__change_balances__to_all_from_one(ledger):
     assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
-    ledger._credit(12, credit_to="ALL", debt_from="antoine")
+    operation = Operation(
+        amount=12, credit_to=ledger.get("ALL"), debt_from=ledger.get("antoine")
+    )
+    ledger._record_operation(operation)
     assert ledger.as_dict() == {"antoine": 0, "baptiste": 0, "renan": 0}
 
 

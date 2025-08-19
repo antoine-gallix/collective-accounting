@@ -115,25 +115,17 @@ class Ledger:
 
     # Changing balances
 
-    def _credit(
-        self,
-        value: Amount,
-        credit_to: AccountSelector = "ALL",
-        debt_from: AccountSelector = "ALL",
-    ) -> None:
-        """Main function to change balance of accounts"""
-        creditors = self.get(credit_to)
-        debitors = self.get(debt_from)
-        credited_value = value / len(creditors)
-        for creditor in creditors:
-            creditor.change_balance(credited_value)
-        debited_value = value / len(debitors)
-        for debitor in debitors:
-            debitor.change_balance(-debited_value)
+    def _record_operation(self, operation: Operation) -> None:
+        logger.info(f"adding operation {operation.tag}")
+        self.operations.append(operation)
+        operation.apply()
 
     def record_shared_expense(self, amount: Amount, by: str):
         logger.info(f"recording shared expense: {by!r} paid {amount} for all")
-        self._credit(amount, credit_to=by)
+        shared_expense = Operation(
+            amount=amount, credit_to=self.get(by), debt_from=self.get("ALL")
+        )
+        self._record_operation(shared_expense)
 
     def record_transfer(
         self,
@@ -142,4 +134,7 @@ class Ledger:
         to: str,
     ):
         logger.info(f"recording transfer: {by!r} send {amount} to {to!r}")
-        self._credit(amount, credit_to=by, debt_from=to)
+        transfer = Operation(
+            amount=amount, credit_to=self.get(by), debt_from=self.get(to)
+        )
+        self._record_operation(transfer)
