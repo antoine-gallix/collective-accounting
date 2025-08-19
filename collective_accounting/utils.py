@@ -1,6 +1,7 @@
 import pathlib
 from decimal import Decimal
 
+import arrow
 import funcy
 from rich.layout import Layout
 from rich.panel import Panel
@@ -42,6 +43,22 @@ def format_balance(credit):
     return formated
 
 
+def format_timestamp(timestamp):
+    return arrow.get(timestamp).to("local").format("YYYY-MM-DD HH:mm:ss")
+
+
+def make_header(ledger):
+    return Text(
+        "\n".join(
+            [
+                f"file: {Ledger.LEDGER_FILE}",
+                f"last update: {format_timestamp(timestamp(Ledger.LEDGER_FILE))}",
+            ]
+        ),
+        justify="center",
+    )
+
+
 def build_ledger_view():
     try:
         ledger = Ledger.load_from_file()
@@ -54,15 +71,8 @@ def build_ledger_view():
     for account in ledger.accounts:
         table.add_row(account.name, format_balance(account.balance))
 
-    header = Text(
-        "\n".join(
-            [
-                f"file: {Ledger.LEDGER_FILE}",
-                f"last update: {timestamp(Ledger.LEDGER_FILE)}",
-            ]
-        ),
-        justify="center",
-    )
     layout = Layout()
-    layout.split_column(Layout(Panel(header)), Layout(Panel(table), ratio=5))
+    layout.split_column(
+        Layout(Panel(make_header(ledger))), Layout(Panel(table), ratio=5)
+    )
     return layout
