@@ -7,7 +7,7 @@ from rich.live import Live
 
 from collective_accounting import logger
 from collective_accounting.models import Ledger
-from collective_accounting.utils import build_ledger_table, timestamp
+from collective_accounting.utils import build_ledger_view, timestamp
 
 main = click.Group()
 
@@ -23,7 +23,7 @@ def init():
 @main.command
 def show():
     """Print the content of the ledger file"""
-    table = build_ledger_table()
+    table = build_ledger_view()
     print(table)
 
 
@@ -32,7 +32,7 @@ def watch():
     """Print the content of the ledger file"""
     logger.remove()
     last_timestamp = timestamp(Ledger.LEDGER_FILE)
-    with Live(build_ledger_table(), screen=True, auto_refresh=False) as live:
+    with Live(build_ledger_view(), screen=True, auto_refresh=False) as live:
         while True:
             time.sleep(0.25)
             new_timestamp = timestamp(Ledger.LEDGER_FILE)
@@ -41,7 +41,7 @@ def watch():
                 (last_timestamp and new_timestamp) and new_timestamp > last_timestamp
             ):
                 last_timestamp = new_timestamp
-                live.update(build_ledger_table(), refresh=True)
+                live.update(build_ledger_view(), refresh=True)
 
 
 @main.command
