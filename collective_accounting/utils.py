@@ -2,10 +2,12 @@ import pathlib
 from decimal import Decimal
 
 import funcy
+from rich.layout import Layout
+from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-import collective_accounting
+from collective_accounting.models import Ledger
 
 # ------------------------ decimal ------------------------
 
@@ -40,14 +42,27 @@ def format_balance(credit):
     return formated
 
 
-def build_ledger_table():
+def build_ledger_view():
     try:
-        ledger = collective_accounting.Ledger.load_from_file()
+        ledger = Ledger.load_from_file()
     except FileNotFoundError:
         return Text("no ledger file", style="red")
-    table = Table(title="Ledger")
+
+    table = Table()
     table.add_column("Account")
     table.add_column("Balance")
     for account in ledger.accounts:
         table.add_row(account.name, format_balance(account.balance))
-    return table
+
+    header = Text(
+        "\n".join(
+            [
+                f"file: {Ledger.LEDGER_FILE}",
+                f"last update: {timestamp(Ledger.LEDGER_FILE)}",
+            ]
+        ),
+        justify="center",
+    )
+    layout = Layout()
+    layout.split_column(Layout(Panel(header)), Layout(Panel(table), ratio=5))
+    return layout
