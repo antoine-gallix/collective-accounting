@@ -22,28 +22,31 @@ class Account:
         self.balance += change
 
 
-type Changes = dict[Account, Amount]
+type Changes = list[(Account, Amount)]
 
 
 class Operation:
+    tag: str
+    changes: Changes
+
     def __init__(
         self, amount: Amount, credit_to: list[Account], debt_from: list[Account]
     ) -> Changes:
         individual_credit = amount / len(credit_to)
-        individual_debt = amount / len(debt_from)
-        self.changes = {creditor: individual_credit for creditor in credit_to} | {
-            debitor: individual_debt for debitor in credit_to
-        }
+        individual_debt = -amount / len(debt_from)
+        self.changes = [(creditor, individual_credit) for creditor in credit_to] + [
+            (debitor, individual_debt) for debitor in debt_from
+        ]
         self.tag = "Generic Operation"
 
     def apply(self) -> None:
         logger.info(f"applying operation: {self.tag}")
-        for account, amount in self.items:
+        for account, amount in self.changes:
             account.change_balance(amount)
 
     def revert(self) -> None:
         logger.info(f"reverting operation: {self.tag}")
-        for account, amount in self.items:
+        for account, amount in self.changes:
             account.change_balance(-amount)
 
 

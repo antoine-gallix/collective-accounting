@@ -1,6 +1,6 @@
 import pytest
 
-from collective_accounting.models import Account, Ledger
+from collective_accounting.models import Account, Ledger, Operation
 
 # ------------------------ Account ------------------------
 
@@ -17,6 +17,36 @@ def test__account__change_credit():
     assert a.balance == 5
     a.change_balance(-8)
     assert a.balance == -3
+
+
+# ------------------------ Operation ------------------------
+
+
+def test__generic_operation__create():
+    antoine = Account("antoine")
+    renan = Account("renan")
+    baptiste = Account("baptiste")
+    operation = Operation(amount=12, credit_to=[antoine], debt_from=[renan, baptiste])
+    assert operation.changes == [(antoine, 12.0), (renan, -6), (baptiste, -6)]
+    assert operation.tag == "Generic Operation"
+
+
+def test__generic_operation__apply_revert():
+    antoine = Account("antoine")
+    renan = Account("renan")
+    baptiste = Account("baptiste")
+    operation = Operation(amount=12, credit_to=[antoine], debt_from=[renan, baptiste])
+    assert antoine.balance == 0
+    assert renan.balance == 0
+    assert baptiste.balance == 0
+    operation.apply()
+    assert antoine.balance == 12
+    assert renan.balance == -6
+    assert baptiste.balance == -6
+    operation.revert()
+    assert antoine.balance == 0
+    assert renan.balance == 0
+    assert baptiste.balance == 0
 
 
 # ------------------------ Ledger ------------------------
