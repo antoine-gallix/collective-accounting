@@ -2,12 +2,11 @@ import time
 from operator import xor
 
 import click
-from rich import print
 from rich.live import Live
 
-from collective_accounting import logger
-from collective_accounting.models import Ledger
-from collective_accounting.utils import build_ledger_view, file_creation_timestamp
+from . import logger
+from .models import Ledger
+from .utils import build_ledger_view, file_creation_timestamp
 
 main = click.Group()
 
@@ -18,13 +17,6 @@ def init():
     logger.info("creating new ledger")
     ledger = Ledger()
     ledger.save_to_file()
-
-
-@main.command
-def show():
-    """Print the content of the ledger file"""
-    table = build_ledger_view()
-    print(table)
 
 
 @main.command
