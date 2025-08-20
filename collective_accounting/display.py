@@ -22,15 +22,17 @@ def format_timestamp(timestamp):
     return arrow.get(timestamp).to("local").format("YYYY-MM-DD HH:mm:ss")
 
 
-def make_file_view(ledger):
-    elements = [
-        f"file: {Ledger.LEDGER_FILE}",
-        f"creation: {format_timestamp(file_creation_timestamp(Ledger.LEDGER_FILE))}",
-        f"last update: {format_timestamp(file_modification_timestamp(Ledger.LEDGER_FILE))}",
-    ]
-    view = Layout()
-    view.split_row(*[Layout(Text(element, justify="center")) for element in elements])
-    return view
+def make_file_info_view(ledger):
+    table = Table(show_header=False, box=None)
+    table.add_row("file", str(Ledger.LEDGER_FILE))
+    table.add_row(
+        "creation", format_timestamp(file_creation_timestamp(Ledger.LEDGER_FILE))
+    )
+    table.add_row(
+        "last update",
+        format_timestamp(file_modification_timestamp(Ledger.LEDGER_FILE)),
+    )
+    return table
 
 
 def make_balance_view(ledger):
@@ -53,7 +55,13 @@ def build_ledger_view():
 
     layout = Layout()
     layout.split_column(
-        Layout(Panel(make_file_view(ledger), title="file"), size=3),
+        Layout(
+            Panel(
+                Align(make_file_info_view(ledger), align="center", vertical="middle"),
+                title="file",
+            ),
+            size=5,
+        ),
         Layout(
             Panel(
                 Align(make_balance_view(ledger), align="center", vertical="middle"),
