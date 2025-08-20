@@ -33,7 +33,7 @@ def make_file_view(ledger):
     return view
 
 
-def make_ledger_view(ledger):
+def make_balance_view(ledger):
     table = Table()
     table.add_column("Account")
     table.add_column("Balance")
@@ -42,19 +42,30 @@ def make_ledger_view(ledger):
     return table
 
 
+def make_operation_view(ledger):
+    return "\n".join(operation.tag for operation in ledger.operations)
+
+
 def build_ledger_view():
     try:
         ledger = Ledger.load_from_file()
     except FileNotFoundError:
         return Text("no ledger file", style="red")
 
-    file_view = make_file_view(ledger)
-    ledger_view = make_ledger_view(ledger)
     layout = Layout()
     layout.split_column(
-        Layout(Panel(file_view, title="file"), size=3),
+        Layout(Panel(make_file_view(ledger), title="file"), size=3),
         Layout(
-            Panel(Align(ledger_view, align="center", vertical="middle"), title="ledger")
+            Panel(
+                Align(make_balance_view(ledger), align="center", vertical="middle"),
+                title="balances",
+            )
+        ),
+        Layout(
+            Panel(
+                Align(make_operation_view(ledger), align="center", vertical="middle"),
+                title="operations",
+            )
         ),
     )
 

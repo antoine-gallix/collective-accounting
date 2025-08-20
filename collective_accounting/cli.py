@@ -4,9 +4,10 @@ from operator import xor
 import click
 from rich.live import Live
 
-from . import logger
+from .display import build_ledger_view
+from .logging import logger
 from .models import Ledger
-from .utils import build_ledger_view, file_creation_timestamp
+from .utils import file_creation_timestamp
 
 main = click.Group()
 
