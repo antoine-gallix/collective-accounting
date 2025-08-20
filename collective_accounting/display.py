@@ -35,10 +35,9 @@ def make_file_view(ledger):
 
 def make_balance_view(ledger):
     table = Table()
-    table.add_column("Account")
-    table.add_column("Balance")
     for account in ledger.accounts:
-        table.add_row(account.name, format_balance(account.balance))
+        table.add_column(account.name)
+    table.add_row(*(format_balance(account.balance) for account in ledger.accounts))
     return table
 
 
@@ -59,7 +58,8 @@ def build_ledger_view():
             Panel(
                 Align(make_balance_view(ledger), align="center", vertical="middle"),
                 title="balances",
-            )
+            ),
+            size=7,
         ),
         Layout(
             Panel(
