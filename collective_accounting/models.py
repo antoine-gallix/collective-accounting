@@ -26,18 +26,21 @@ type Changes = list[(Account, Amount)]
 
 
 class Operation:
-    tag: str
     changes: Changes
 
     def __init__(
-        self, amount: Amount, credit_to: list[Account], debt_from: list[Account]
+        self,
+        tag: str,
+        amount: Amount,
+        credit_to: list[Account],
+        debt_from: list[Account],
     ) -> Changes:
+        self.tag = tag
         individual_credit = amount / len(credit_to)
         individual_debt = -amount / len(debt_from)
         self.changes = [(creditor, individual_credit) for creditor in credit_to] + [
             (debitor, individual_debt) for debitor in debt_from
         ]
-        self.tag = "Generic Operation"
 
     def apply(self) -> None:
         logger.info(f"applying operation: {self.tag}")
@@ -121,9 +124,11 @@ class Ledger:
         operation.apply()
 
     def record_shared_expense(self, amount: Amount, by: str):
-        logger.info(f"recording shared expense: {by!r} paid {amount} for all")
         shared_expense = Operation(
-            amount=amount, credit_to=self.get(by), debt_from=self.get("ALL")
+            tag=f"shared expense: {by} has spent {amount}",
+            amount=amount,
+            credit_to=self.get(by),
+            debt_from=self.get("ALL"),
         )
         self._record_operation(shared_expense)
 
@@ -133,8 +138,10 @@ class Ledger:
         by: str,
         to: str,
     ):
-        logger.info(f"recording transfer: {by!r} send {amount} to {to!r}")
         transfer = Operation(
-            amount=amount, credit_to=self.get(by), debt_from=self.get(to)
+            tag=f"transfer: {by} sends {amount} to {to}",
+            amount=amount,
+            credit_to=self.get(by),
+            debt_from=self.get(to),
         )
         self._record_operation(transfer)

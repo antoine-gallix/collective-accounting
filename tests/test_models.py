@@ -28,7 +28,7 @@ def test__generic_operation__create():
     baptiste = Account("baptiste")
     operation = Operation(amount=12, credit_to=[antoine], debt_from=[renan, baptiste])
     assert operation.changes == [(antoine, 12.0), (renan, -6), (baptiste, -6)]
-    assert operation.tag == "Generic Operation"
+    assert operation.TAG == "Generic Operation"
 
 
 def test__generic_operation__apply_revert():
