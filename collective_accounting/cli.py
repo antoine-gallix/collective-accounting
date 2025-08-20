@@ -7,7 +7,7 @@ from rich.live import Live
 from .display import build_ledger_view
 from .logging import logger
 from .models import Ledger
-from .utils import file_creation_timestamp
+from .utils import file_modification_timestamp
 
 main = click.Group()
 
@@ -24,17 +24,17 @@ def init():
 def watch():
     """Print the content of the ledger file"""
     logger.remove()
-    last_timestamp = file_creation_timestamp(Ledger.LEDGER_FILE)
-    with Live(build_ledger_view(), screen=True, auto_refresh=False) as live:
+    last_timestamp = file_modification_timestamp(Ledger.LEDGER_FILE)
+    with Live(build_ledger_view(), screen=True) as live:
         while True:
             time.sleep(0.25)
-            new_timestamp = file_creation_timestamp(Ledger.LEDGER_FILE)
+            new_timestamp = file_modification_timestamp(Ledger.LEDGER_FILE)
             # one of the two timestamp is None: ledger just got deleted or created
             if xor(last_timestamp is None, new_timestamp is None) or (
                 (last_timestamp and new_timestamp) and new_timestamp > last_timestamp
             ):
                 last_timestamp = new_timestamp
-                live.update(build_ledger_view(), refresh=True)
+                live.update(build_ledger_view())
 
 
 @main.command
