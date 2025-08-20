@@ -44,7 +44,10 @@ def make_balance_view(ledger):
 
 
 def make_operation_view(ledger):
-    return "\n".join(operation.tag for operation in ledger.operations)
+    table = Table()
+    for operation in ledger.operations:
+        table.add_row(operation.tag)
+    return table
 
 
 class CenteredPanel(Panel):
