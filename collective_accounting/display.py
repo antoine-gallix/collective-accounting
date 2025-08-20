@@ -23,7 +23,7 @@ def format_timestamp(timestamp):
 
 
 def make_file_info_view(ledger):
-    table = Table(show_header=False, box=None)
+    table = Table.grid(padding=(0, 5))
     table.add_row("file", str(Ledger.LEDGER_FILE))
     table.add_row(
         "creation", format_timestamp(file_creation_timestamp(Ledger.LEDGER_FILE))
@@ -44,9 +44,9 @@ def make_balance_view(ledger):
 
 
 def make_operation_view(ledger):
-    table = Table()
-    for operation in ledger.operations:
-        table.add_row(operation.tag)
+    table = Table.grid(padding=(0, 5))
+    for i, operation in enumerate(ledger.operations, start=1):
+        table.add_row(str(i), operation.tag)
     return table
 
 
