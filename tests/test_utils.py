@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from collective_accounting.utils import divide, round_to_cent, timestamp
+from collective_accounting.utils import divide, file_creation_timestamp, round_to_cent
 
 # ------------------------ decimal ------------------------
 
@@ -22,14 +22,14 @@ def test__divide():
 def test__timestamp(tmp_path):
     file = tmp_path / "file"
     # no file
-    assert timestamp(file) is None
+    assert file_creation_timestamp(file) is None
     # timestamp is a stable number
     file.write_text("something")
-    first_timestamp = timestamp(file)
+    first_timestamp = file_creation_timestamp(file)
     assert first_timestamp is not None
     assert isinstance(first_timestamp, float)
-    assert timestamp(file) == first_timestamp
+    assert file_creation_timestamp(file) == first_timestamp
     # timestamp changes after a write
     file.write_text("something more")
-    second_timestamp = timestamp(file)
+    second_timestamp = file_creation_timestamp(file)
     assert second_timestamp > first_timestamp

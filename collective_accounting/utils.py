@@ -27,8 +27,13 @@ def divide(amount: Decimal, denominator: Decimal) -> (Decimal, Decimal):
 
 
 @funcy.ignore(FileNotFoundError)
-def timestamp(path):
+def file_modification_timestamp(path):
     return pathlib.Path(path).stat().st_mtime
+
+
+@funcy.ignore(FileNotFoundError)
+def file_creation_timestamp(path):
+    return pathlib.Path(path).stat().st_atime
 
 
 # ------------------------ display ------------------------

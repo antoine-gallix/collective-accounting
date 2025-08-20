@@ -7,7 +7,7 @@ from rich.live import Live
 
 from collective_accounting import logger
 from collective_accounting.models import Ledger
-from collective_accounting.utils import build_ledger_view, timestamp
+from collective_accounting.utils import build_ledger_view, file_creation_timestamp
 
 main = click.Group()
 
@@ -31,11 +31,11 @@ def show():
 def watch():
     """Print the content of the ledger file"""
     logger.remove()
-    last_timestamp = timestamp(Ledger.LEDGER_FILE)
+    last_timestamp = file_creation_timestamp(Ledger.LEDGER_FILE)
     with Live(build_ledger_view(), screen=True, auto_refresh=False) as live:
         while True:
             time.sleep(0.25)
-            new_timestamp = timestamp(Ledger.LEDGER_FILE)
+            new_timestamp = file_creation_timestamp(Ledger.LEDGER_FILE)
             # one of the two timestamp is None: ledger just got deleted or created
             if xor(last_timestamp is None, new_timestamp is None) or (
                 (last_timestamp and new_timestamp) and new_timestamp > last_timestamp
