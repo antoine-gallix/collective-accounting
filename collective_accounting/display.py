@@ -47,6 +47,14 @@ def make_operation_view(ledger):
     return "\n".join(operation.tag for operation in ledger.operations)
 
 
+class CenteredPanel(Panel):
+    def __init__(self, content, title):
+        super().__init__(
+            Align(content, align="center", vertical="middle"),
+            title=title,
+        )
+
+
 def build_ledger_view():
     try:
         ledger = Ledger.load_from_file()
@@ -56,22 +64,16 @@ def build_ledger_view():
     layout = Layout()
     layout.split_column(
         Layout(
-            Panel(
-                Align(make_file_info_view(ledger), align="center", vertical="middle"),
-                title="file",
-            ),
+            CenteredPanel(make_file_info_view(ledger), "file"),
             size=5,
         ),
         Layout(
-            Panel(
-                Align(make_balance_view(ledger), align="center", vertical="middle"),
-                title="balances",
-            ),
+            CenteredPanel(make_balance_view(ledger), "balances"),
             size=7,
         ),
         Layout(
-            Panel(
-                Align(make_operation_view(ledger), align="center", vertical="middle"),
+            CenteredPanel(
+                make_operation_view(ledger),
                 title="operations",
             )
         ),
