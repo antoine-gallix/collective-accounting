@@ -45,16 +45,21 @@ def make_balance_view(ledger):
 
 def make_operation_view(ledger):
     table = Table.grid(padding=(0, 5))
-    for i, operation in enumerate(ledger.operations, start=1):
+    for i, operation in reversed(list(enumerate(ledger.operations, start=1))):
         table.add_row(str(i), operation.tag)
     return table
 
 
 class CenteredPanel(Panel):
-    def __init__(self, content, title):
+    def __init__(
+        self, content, title=None, align: None | dict = None, panel: None | dict = None
+    ):
         super().__init__(
-            Align(content, align="center", vertical="middle"),
+            Align(
+                content, **({"align": "center", "vertical": "middle"} | (align or {}))
+            ),
             title=title,
+            **(panel or {}),
         )
 
 
@@ -67,17 +72,19 @@ def build_ledger_view():
     layout = Layout()
     layout.split_column(
         Layout(
-            CenteredPanel(make_file_info_view(ledger), "file"),
+            CenteredPanel(make_file_info_view(ledger), title="file"),
             size=5,
         ),
         Layout(
-            CenteredPanel(make_balance_view(ledger), "balances"),
+            CenteredPanel(make_balance_view(ledger), title="balances"),
             size=7,
         ),
         Layout(
             CenteredPanel(
                 make_operation_view(ledger),
                 title="operations",
+                align={"vertical": "top"},
+                panel={"padding": (1, 0)},
             )
         ),
     )
