@@ -1,8 +1,20 @@
 from decimal import Decimal
 
-from pytest import raises
+from pytest import fixture, raises
 
 from collective_accounting.models_next import Accounts, Ledger, Operation
+
+# ------------------------ fixtures ------------------------
+
+
+@fixture
+def accounts_3():
+    accounts = Accounts()
+    accounts.add_account("antoine")
+    accounts.add_account("baptiste")
+    accounts.add_account("renan")
+    return accounts
+
 
 # ------------------------ accounts ------------------------
 
@@ -67,10 +79,27 @@ def test__Accounts__balanced():
 # ------------------------ operations ------------------------
 
 
-def test__Operation():
+def test_Operation(accounts_3):
     operation = Operation()
-    assert operation.name == "Base Operation"
+    assert operation.TYPE == "Base Operation"
     assert operation.description == "nothing happens"
+    assert accounts_3 == {
+        "antoine": 0,
+        "baptiste": 0,
+        "renan": 0,
+    }
+    operation.apply(accounts_3)
+    assert accounts_3 == {
+        "antoine": 0,
+        "baptiste": 0,
+        "renan": 0,
+    }
+    operation.apply(accounts_3)
+    assert accounts_3 == {
+        "antoine": 0,
+        "baptiste": 0,
+        "renan": 0,
+    }
 
 
 # ------------------------ ledger ------------------------
@@ -79,3 +108,4 @@ def test__Operation():
 def test__Ledger__create():
     ledger = Ledger()
     assert ledger.accounts == {}
+    assert ledger.operations == []

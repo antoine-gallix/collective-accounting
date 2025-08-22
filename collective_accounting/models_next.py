@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from decimal import Decimal
+from typing import ClassVar, Dict
 
 from .logging import logger
 
@@ -7,9 +8,7 @@ type Amount = Decimal | int
 
 
 @dataclass
-class Accounts(dict):
-    # balances: dict[str, Decimal] = field(default=dict)
-
+class Accounts(Dict[str, Decimal]):
     def add_account(self, name: str):
         if not isinstance(name, str):
             raise TypeError(f"name is not a string: {name}")
@@ -33,17 +32,30 @@ class Accounts(dict):
 
 @dataclass
 class Operation:
-    name = "Base Operation"
+    TYPE: ClassVar[str] = "Base Operation"
+    params: dict = field(default=dict)
 
-    def __init__(self):
-        pass
+    def __init__(self, **params):
+        self.params = params
 
     @property
     def description(self):
         return "nothing happens"
 
-    def apply(self, ledger: Accounts): ...
-    def revert(self, ledger: Accounts): ...
+    def apply(self, accounts: Accounts): ...
+    def revert(self, accounts: Accounts): ...
+
+
+@dataclass
+class AddAccount(Operation):
+    TYPE: ClassVar[str] = "Add Account"
+
+    @property
+    def description(self):
+        return "name"
+
+    def apply(self, accounts: Accounts): ...
+    def revert(self, accounts: Accounts): ...
 
 
 @dataclass
