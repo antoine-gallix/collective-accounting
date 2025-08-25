@@ -5,15 +5,20 @@ import funcy
 
 # ------------------------ decimal ------------------------
 
+type Amount = Decimal | int
+
 
 def round_to_cent(amount):
     return Decimal(amount).quantize(Decimal("0.01"))
 
 
-def divide(amount: Decimal, denominator: Decimal) -> (Decimal, Decimal):
+def divide(amount: Amount, denominator: int) -> list[Decimal]:
+    """Split a decimal amount into parts as equal as possible, without error, rounded to cent"""
     quantized_result = round_to_cent(amount / denominator)
     remainder = amount - quantized_result * denominator
-    return (quantized_result, remainder)
+    return funcy.lconcat(
+        [quantized_result + remainder], funcy.repeat(quantized_result, denominator - 1)
+    )
 
 
 # ------------------------ ledger file ------------------------

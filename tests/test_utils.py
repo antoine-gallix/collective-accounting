@@ -16,9 +16,9 @@ def test__round_to_cent():
 
 
 def test__divide():
-    assert divide(Decimal(9), Decimal(3)) == (Decimal(3), Decimal(0))
-    assert divide(Decimal(10), Decimal(3)) == (Decimal("3.33"), Decimal("0.01"))
-    assert divide(Decimal(20), Decimal(3)) == (Decimal("6.67"), Decimal("-0.01"))
+    assert divide(Decimal(9), 3) == [Decimal(3), Decimal(3), Decimal(3)]
+    assert divide(Decimal(10), 3) == [Decimal("3.34"), Decimal("3.33"), Decimal("3.33")]
+    assert divide(Decimal(20), 3) == [Decimal("6.66"), Decimal("6.67"), Decimal("6.67")]
 
 
 # ------------------------ file ------------------------

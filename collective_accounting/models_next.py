@@ -1,65 +1,232 @@
+from abc import ABC, abstractmethod
+from collections import namedtuple
+from copy import copy
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import ClassVar, Dict
+from typing import ClassVar, Collection, Dict, Self
 
 from .logging import logger
+from .utils import Amount, divide
 
-type Amount = Decimal | int
+type Name = str
+
+
+class AtomicChange(ABC):
+    """An AtomicChange is a change of state that cannot be decomposed in multiple smaller operations."""
 
 
 @dataclass
-class Accounts(Dict[str, Decimal]):
-    def add_account(self, name: str):
+class AccountCreation(AtomicChange):
+    name: Name
+
+
+@dataclass
+class AccountRemoval(AtomicChange):
+    name: Name
+
+
+@dataclass
+class BalanceChange(AtomicChange):
+    name: Name
+    amount: Amount
+
+
+type ChangeSet = Collection[AtomicChange]
+
+
+@dataclass
+class LedgerState(Dict[str, Decimal]):
+    """A collection of accounts with a balance. Represents the state of a ledger at a given point in time."""
+
+    def _add_account(self, name: str):
         if not isinstance(name, str):
             raise TypeError(f"name is not a string: {name}")
         if not name:
             raise ValueError(f"name string is empty: {name}")
         if name in self:
-            raise ValueError(f"account with name {name} already exists")
+            raise RuntimeError(f"account already exists: {name}")
         self[name] = Decimal(0)
 
-    def change_balance(self, name: str, amount: Amount):
+    def _remove_account(self, name: str):
+        if name not in self:
+            raise RuntimeError(f"account does not exists: {name} ")
+        if self[name] != 0:
+            raise RuntimeError(f"account has non-null balance: {name}")
+        del self[name]
+
+    def _change_balance(self, name: str, amount: Amount):
         logger.info(f"changing balance of {name!r}: {amount:+}")
         try:
             self[name] += Decimal(amount)
         except KeyError:
-            raise ValueError(f"account does not exist: {name}")
+            raise RuntimeError(f"account with name {name} does not exists")
 
-    def check_balances(self):
+    def _check_balances(self):
         if (error := sum(self.values())) != 0:
             raise RuntimeError(f"accounts unbalanced. Sum of balances is {error:+}")
 
+    # -------- changes
 
-@dataclass
-class Operation:
-    TYPE: ClassVar[str] = "Base Operation"
-    params: dict = field(default=dict)
+    def apply_change(self, change: AtomicChange):
+        match change:
+            case AccountCreation():
+                self._add_account(change.name)
+            case AccountRemoval():
+                self._remove_account(change.name)
+            case BalanceChange():
+                self._change_balance(change.name, change.amount)
 
-    def __init__(self, **params):
-        self.params = params
+    def apply_changeset(self, change_set: ChangeSet) -> Self:
+        next_state = copy(self)
+        for change in change_set:
+            next_state.apply_change(change)
+        next_state._check_balances()
+        return next_state
+
+
+class Operation(ABC):
+    """An Operation is an action that transforms the ledger state. An operation applied to a ledger, if valid, produces a changeset that then modifies the state of the ledger."""
+
+    TYPE: ClassVar[str]
 
     @property
-    def description(self):
-        return "nothing happens"
+    @abstractmethod
+    def description(self) -> str: ...
 
-    def apply(self, accounts: Accounts): ...
-    def revert(self, accounts: Accounts): ...
+    @abstractmethod
+    def changes(self, accounts: LedgerState) -> ChangeSet: ...
 
 
 @dataclass
 class AddAccount(Operation):
     TYPE: ClassVar[str] = "Add Account"
+    name: Name
 
     @property
     def description(self):
-        return "name"
+        return self.name
 
-    def apply(self, accounts: Accounts): ...
-    def revert(self, accounts: Accounts): ...
+    def changes(self, accounts: LedgerState):
+        return [AccountCreation(self.name)]
+
+
+@dataclass
+class RemoveAccount(Operation):
+    TYPE: ClassVar[str] = "Remove Account"
+    name: Name
+
+    @property
+    def description(self):
+        return self.name
+
+    def changes(self, accounts: LedgerState):
+        return [AccountRemoval(self.name)]
+
+
+@dataclass
+class ChangeBalances(Operation):
+    """Generic Balance Change Operation
+
+    Represents the transfer of credit from one group of accounts to another group of accounts. The amount of the change is divided between the creditors (add_to), and added to their balance; between the debitors (substract_from), it is divided and substracted from their balance.
+
+    Specifying None for either group is interpreted as `all accounts`
+
+    More precisely:
+        individual_creditor_balance_change = amount / len(add_to)
+        individual_debitor_balance_change = - amount / len(substract_from)
+    """
+
+    TYPE: ClassVar[str] = "Change Balances"
+    credit_to: Collection[Name] | None
+    debt_from: Collection[Name] | None
+    amount: Amount
+
+    @property
+    def description(self):
+        return f"transfering credit ({self.amount}) from ({'All' if self.debt_from is None else ', '.join(self.debt_from)}) to ({'All' if self.credit_to is None else ', '.join(self.credit_to)})"
+
+    def changes(self, accounts: LedgerState) -> ChangeSet:
+        creditors = list(accounts.keys()) if self.credit_to is None else self.credit_to
+        debitors = list(accounts.keys()) if self.debt_from is None else self.debt_from
+        return [
+            BalanceChange(name=creditor, amount=balance_change)
+            for creditor, balance_change in zip(
+                creditors, divide(self.amount, len(creditors))
+            )
+        ] + [
+            BalanceChange(name=debitor, amount=-balance_change)
+            for debitor, balance_change in zip(
+                debitors, divide(self.amount, len(debitors))
+            )
+        ]
+
+
+@dataclass
+class SharedExpense(Operation):
+    TYPE: ClassVar[str] = "Shared Expense"
+    by: Name
+    amount: Amount
+    subject: str
+
+    @property
+    def description(self):
+        return f"{self.by} paid {self.amount} for {self.subject}"
+
+    def changes(self, accounts: LedgerState):
+        return ChangeBalances(
+            credit_to=[self.by], debt_from=None, amount=self.amount
+        ).changes(accounts)
+
+
+@dataclass
+class Transfer(Operation):
+    TYPE: ClassVar[str] = "Money Transfer"
+    by: Name
+    to: Name
+    amount: Amount
+
+    @property
+    def description(self):
+        return f"{self.by} sends {self.amount} to {self.to}"
+
+    def changes(self, accounts: LedgerState):
+        return ChangeBalances(
+            credit_to=[self.by], debt_from=[self.to], amount=self.amount
+        ).changes(accounts)
+
+
+@dataclass
+class LedgerRecord:
+    state: LedgerState
+    operation: Operation
+    changes: ChangeSet
 
 
 @dataclass
 class Ledger:
-    accounts: Accounts = field(default_factory=Accounts)
-    operations: list[Operation] = field(default_factory=list)
+    records: list[LedgerRecord] = field(default_factory=list)
     LEDGER_FILE = "ledger.pkl"
+
+    @property
+    def state(self):
+        if not self.records:
+            return LedgerState()
+        else:
+            return self.records[-1].state
+
+    @classmethod
+    def load_from_file(cls):
+        # load operations from files
+        # update state to the latest operation
+        ...
+
+    def save_to_file(self):
+        # save operations to file
+        ...
+
+    def record_operation(self, operation):
+        changes = operation.changes(self.state)
+        new_state = self.state.apply_changeset(changes)
+        self.records.append(
+            LedgerRecord(operation=operation, changes=changes, state=new_state)
+        )
