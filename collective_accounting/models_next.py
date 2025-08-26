@@ -1,9 +1,12 @@
+import pathlib
 from abc import ABC, abstractmethod
-from collections import namedtuple
 from copy import copy
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from decimal import Decimal
 from typing import ClassVar, Collection, Dict, Self
+
+import funcy
+import yaml
 
 from .logging import logger
 from .utils import Amount, divide
@@ -84,6 +87,7 @@ class LedgerState(Dict[str, Decimal]):
         return next_state
 
 
+@dataclass
 class Operation(ABC):
     """An Operation is an action that transforms the ledger state. An operation applied to a ledger, if valid, produces a changeset that then modifies the state of the ledger."""
 
@@ -95,6 +99,9 @@ class Operation(ABC):
 
     @abstractmethod
     def changes(self, accounts: LedgerState) -> ChangeSet: ...
+
+    def as_dict(self) -> dict:
+        return {"operation": self.TYPE} | asdict(self)
 
 
 @dataclass
@@ -137,9 +144,9 @@ class ChangeBalances(Operation):
     """
 
     TYPE: ClassVar[str] = "Change Balances"
+    amount: Amount
     credit_to: Collection[Name] | None
     debt_from: Collection[Name] | None
-    amount: Amount
 
     @property
     def description(self):
@@ -164,8 +171,8 @@ class ChangeBalances(Operation):
 @dataclass
 class SharedExpense(Operation):
     TYPE: ClassVar[str] = "Shared Expense"
-    by: Name
     amount: Amount
+    by: Name
     subject: str
 
     @property
@@ -181,9 +188,9 @@ class SharedExpense(Operation):
 @dataclass
 class Transfer(Operation):
     TYPE: ClassVar[str] = "Money Transfer"
+    amount: Amount
     by: Name
     to: Name
-    amount: Amount
 
     @property
     def description(self):
@@ -214,19 +221,30 @@ class Ledger:
         else:
             return self.records[-1].state
 
+    def save_to_file(self):
+        pathlib.Path(self.LEDGER_FILE).write_text(
+            yaml.dump_all(
+                funcy.map(
+                    Operation.as_dict, funcy.pluck_attr("operation", self.records)
+                ),
+                sort_keys=False,
+            )
+        )
+
     @classmethod
     def load_from_file(cls):
         # load operations from files
         # update state to the latest operation
         ...
 
-    def save_to_file(self):
-        # save operations to file
-        ...
-
     def record_operation(self, operation):
-        changes = operation.changes(self.state)
-        new_state = self.state.apply_changeset(changes)
+        logger.info(f"recording operation into ledger: {operation}")
+        try:
+            changes = operation.changes(self.state)
+            new_state = self.state.apply_changeset(changes)
+        except:
+            logger.error("operation could not been applied")
+            raise
         self.records.append(
             LedgerRecord(operation=operation, changes=changes, state=new_state)
         )

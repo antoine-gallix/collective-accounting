@@ -1,4 +1,6 @@
+import pathlib
 from decimal import Decimal
+from textwrap import dedent
 
 from pytest import fixture, raises
 
@@ -415,3 +417,57 @@ def test__Ledger__transfer(ledger):
         "baptiste": Decimal("0"),
         "renan": Decimal("-50"),
     }
+
+
+# ------------------------ IOs ------------------------
+
+
+@fixture
+def tmp_ledger_file(mocker, tmp_path):
+    mocker.patch.object(Ledger, "LEDGER_FILE", tmp_path / Ledger.LEDGER_FILE)
+
+
+def test__Ledger__save_to_file(ledger, tmp_ledger_file):
+    for operation in [
+        AddAccount("kriti"),
+        ChangeBalances(
+            amount=50, credit_to=["antoine"], debt_from=["renan", "baptiste"]
+        ),
+        SharedExpense(by="baptiste", amount=40, subject="buy lots of coffee"),
+        Transfer(by="antoine", to="baptiste", amount=12),
+    ]:
+        ledger.record_operation(operation)
+    ledger.save_to_file()
+    # ---
+    file_content = pathlib.Path(ledger.LEDGER_FILE).read_text()
+    assert file_content == dedent("""\
+            operation: Add Account
+            name: antoine
+            ---
+            operation: Add Account
+            name: baptiste
+            ---
+            operation: Add Account
+            name: renan
+            ---
+            operation: Add Account
+            name: kriti
+            ---
+            operation: Change Balances
+            amount: 50
+            credit_to:
+            - antoine
+            debt_from:
+            - renan
+            - baptiste
+            ---
+            operation: Shared Expense
+            amount: 40
+            by: baptiste
+            subject: buy lots of coffee
+            ---
+            operation: Money Transfer
+            amount: 12
+            by: antoine
+            to: baptiste
+            """)
