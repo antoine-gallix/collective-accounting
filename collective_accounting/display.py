@@ -52,14 +52,19 @@ def make_operation_view(ledger):
 
 class CenteredPanel(Panel):
     def __init__(
-        self, content, title=None, align: None | dict = None, panel: None | dict = None
+        self,
+        content,
+        title=None,
+        align_options: None | dict = None,
+        panel_options: None | dict = None,
     ):
         super().__init__(
             Align(
-                content, **({"align": "center", "vertical": "middle"} | (align or {}))
+                content,
+                **({"align": "center", "vertical": "middle"} | (align_options or {})),  # type: ignore (bug in pyright?)
             ),
             title=title,
-            **(panel or {}),
+            **(panel_options or {}),
         )
 
 
@@ -83,8 +88,8 @@ def build_ledger_view():
             CenteredPanel(
                 make_operation_view(ledger),
                 title="operations",
-                align={"vertical": "top"},
-                panel={"padding": (1, 0)},
+                align_options={"vertical": "top"},
+                panel_options={"padding": (1, 0)},
             )
         ),
     )
