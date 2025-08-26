@@ -1,236 +1,478 @@
-import pytest
+import pathlib
+from decimal import Decimal
+from textwrap import dedent
 
-from collective_accounting.models import Account, Ledger, Operation
+from pytest import fixture, raises
 
-# ------------------------ Account ------------------------
+from collective_accounting.models import (
+    AccountCreation,
+    AccountRemoval,
+    AddAccount,
+    BalanceChange,
+    ChangeBalances,
+    Ledger,
+    LedgerState,
+    RemoveAccount,
+    SharedExpense,
+    Transfer,
+)
 
-
-def test__account__create():
-    a = Account("antoine")
-    assert a.balance == 0
-
-
-def test__account__change_credit():
-    a = Account("antoine")
-    assert a.balance == 0
-    a.change_balance(5)
-    assert a.balance == 5
-    a.change_balance(-8)
-    assert a.balance == -3
-
-
-# ------------------------ Operation ------------------------
+# ------------------------ fixtures ------------------------
 
 
-def test__generic_operation__create():
-    antoine = Account("antoine")
-    renan = Account("renan")
-    baptiste = Account("baptiste")
-    operation = Operation(amount=12, credit_to=[antoine], debt_from=[renan, baptiste])
-    assert operation.changes == [(antoine, 12.0), (renan, -6), (baptiste, -6)]
-    assert operation.TAG == "Generic Operation"
+@fixture
+def ledger_state():
+    state = LedgerState()
+    state._add_account("antoine")
+    state._add_account("baptiste")
+    state._add_account("renan")
+    return state
 
 
-def test__generic_operation__apply_revert():
-    antoine = Account("antoine")
-    renan = Account("renan")
-    baptiste = Account("baptiste")
-    operation = Operation(amount=12, credit_to=[antoine], debt_from=[renan, baptiste])
-    assert antoine.balance == 0
-    assert renan.balance == 0
-    assert baptiste.balance == 0
-    operation.apply()
-    assert antoine.balance == 12
-    assert renan.balance == -6
-    assert baptiste.balance == -6
-    operation.revert()
-    assert antoine.balance == 0
-    assert renan.balance == 0
-    assert baptiste.balance == 0
+# ------------------------ accounts ------------------------
 
 
-# ------------------------ Ledger ------------------------
+def test__LedgerState__creation():
+    state = LedgerState()
+    assert state == {}
 
 
-@pytest.fixture
-def tmp_ledger_file(mocker, tmp_path):
-    mocker.patch.object(Ledger, "LEDGER_FILE", tmp_path / Ledger.LEDGER_FILE)
+def test__LedgerState__add_account():
+    state = LedgerState()
+    state._add_account("antoine")
+    assert state == {"antoine": 0}
 
 
-@pytest.fixture
-def new_ledger():
+def test__LedgerState__add_account__invalid():
+    state = LedgerState()
+    # not a string
+    with raises(TypeError):
+        state._add_account(12)  # type: ignore
+    # empty string
+    with raises(ValueError):
+        state._add_account("")
+
+
+def test__LedgerState__add_account__existing_name(ledger_state):
+    with raises(RuntimeError):
+        ledger_state._add_account("antoine")
+
+
+def test__LedgerState__remove_account(ledger_state):
+    ledger_state._remove_account("antoine")
+    assert ledger_state == {"baptiste": 0, "renan": 0}
+
+
+def test__LedgerState__remove_account__not_exist(ledger_state):
+    with raises(RuntimeError):
+        ledger_state._remove_account("kriti")
+
+
+def test__LedgerState__remove_account__non_null_balance(ledger_state):
+    ledger_state._change_balance("antoine", 10)
+    with raises(RuntimeError):
+        ledger_state._remove_account("antoine")
+
+
+def test__LedgerState__change_balance(ledger_state):
+    assert ledger_state == {
+        "antoine": 0,
+        "baptiste": 0,
+        "renan": 0,
+    }
+    ledger_state._change_balance("antoine", 10)
+    assert ledger_state == {
+        "antoine": 10,
+        "baptiste": 0,
+        "renan": 0,
+    }
+
+
+def test__LedgerState__change_balance__name_do_not_exist():
+    state = LedgerState()
+    state._add_account("antoine")
+    with raises(RuntimeError):
+        state._change_balance("baptiste", 10)
+
+
+def test__LedgerState__check_balances(ledger_state):
+    ledger_state._check_balances()
+    ledger_state._change_balance("antoine", 10)
+    with raises(RuntimeError):
+        ledger_state._check_balances()
+    ledger_state._change_balance("renan", -5)
+    ledger_state._change_balance("baptiste", -5)
+    ledger_state._check_balances()
+
+
+# ------------------------ accounts and changes ------------------------
+
+
+def test__LedgerState__apply_change__AccountCreation(ledger_state):
+    ledger_state.apply_change(AccountCreation(name="kriti"))
+    assert ledger_state == {
+        "antoine": Decimal("0"),
+        "baptiste": Decimal("0"),
+        "kriti": Decimal("0"),
+        "renan": Decimal("0"),
+    }
+    with raises(RuntimeError):
+        ledger_state.apply_change(AccountCreation(name="kriti"))
+
+
+def test__LedgerState__apply_change__AccountRemoval(ledger_state):
+    ledger_state.apply_change(AccountRemoval(name="antoine"))
+    assert ledger_state == {
+        "baptiste": Decimal("0"),
+        "renan": Decimal("0"),
+    }
+    with raises(RuntimeError):
+        ledger_state.apply_change(AccountRemoval(name="finn"))
+    ledger_state._change_balance("baptiste", 12)
+    with raises(RuntimeError):
+        ledger_state.apply_change(AccountRemoval(name="baptiste"))
+
+
+def test__LedgerState__apply_change__BalanceChange(ledger_state):
+    ledger_state.apply_change(BalanceChange(name="antoine", amount=12))
+    assert ledger_state == {
+        "antoine": Decimal(12),
+        "baptiste": Decimal("0"),
+        "renan": Decimal("0"),
+    }
+
+
+def test__LedgerState__apply_changeset__AccountCreation(ledger_state):
+    new_state = ledger_state.apply_changeset([AccountCreation(name="finn")])
+    assert new_state == {
+        "antoine": Decimal("0"),
+        "baptiste": Decimal("0"),
+        "renan": Decimal("0"),
+        "finn": Decimal("0"),
+    }
+    with raises(RuntimeError):
+        ledger_state.apply_changeset([AccountCreation(name="antoine")])
+
+
+def test__LedgerState__apply_changeset__AccountRemoval(ledger_state):
+    new_state = ledger_state.apply_changeset([AccountRemoval(name="antoine")])
+    assert new_state == {
+        "baptiste": Decimal("0"),
+        "renan": Decimal("0"),
+    }
+    with raises(RuntimeError):
+        ledger_state.apply_changeset([AccountRemoval(name="finn")])
+
+
+def test__LedgerState__apply_changeset__BalanceChange(ledger_state):
+    new_state = ledger_state.apply_changeset(
+        [
+            BalanceChange(name="antoine", amount=10),
+            BalanceChange(name="renan", amount=-5),
+            BalanceChange(name="baptiste", amount=-5),
+        ]
+    )
+    assert new_state == {
+        "antoine": Decimal("10"),
+        "baptiste": Decimal("-5"),
+        "renan": Decimal("-5"),
+    }
+    with raises(RuntimeError):
+        ledger_state.apply_changeset(
+            [
+                BalanceChange(name="antoine", amount=10),
+                BalanceChange(name="renan", amount=-5),
+            ]
+        )
+
+
+# ------------------------ operations ------------------------
+
+
+def test__operations__AddAccount(ledger_state):
+    operation = AddAccount("kriti")
+    assert operation.TYPE == "Add Account"
+    assert operation.description == "kriti"
+    assert operation.changes(ledger_state) == [AccountCreation("kriti")]
+
+
+def test__operations__RemoveAccount(ledger_state):
+    operation = RemoveAccount("kriti")
+    assert operation.TYPE == "Remove Account"
+    assert operation.description == "kriti"
+    assert operation.changes(ledger_state) == [AccountRemoval("kriti")]
+
+
+def test__operations__ChangeBalances__one_to_one(ledger_state):
+    operation = ChangeBalances(amount=10, credit_to=["antoine"], debt_from=["baptiste"])
+    assert operation.TYPE == "Change Balances"
+    assert operation.description == "(10) owed by (baptiste), credited to (antoine)"
+    assert operation.changes(ledger_state) == [
+        BalanceChange("antoine", Decimal(10)),
+        BalanceChange("baptiste", Decimal(-10)),
+    ]
+
+
+def test__operations__ChangeBalances__one_to_two(ledger_state):
+    operation = ChangeBalances(
+        amount=10, credit_to=["antoine", "renan"], debt_from=["baptiste"]
+    )
+    assert (
+        operation.description == "(10) owed by (baptiste), credited to (antoine, renan)"
+    )
+    assert operation.changes(ledger_state) == [
+        BalanceChange("antoine", Decimal(5)),
+        BalanceChange("renan", Decimal(5)),
+        BalanceChange("baptiste", Decimal(-10)),
+    ]
+
+
+def test__operations__ChangeBalances__one_to_all(ledger_state):
+    operation = ChangeBalances(amount=10, credit_to=None, debt_from=["baptiste"])
+    assert operation.description == "(10) owed by (baptiste), credited to (All)"
+    assert operation.changes(ledger_state) == [
+        BalanceChange("antoine", Decimal("3.34")),
+        BalanceChange("baptiste", Decimal("3.33")),
+        BalanceChange("renan", Decimal("3.33")),
+        BalanceChange("baptiste", Decimal("-10.00")),
+    ]
+
+
+def test__operations__ChangeBalances__two_to_one(ledger_state):
+    operation = ChangeBalances(
+        amount=10, credit_to=["renan"], debt_from=["baptiste", "antoine"]
+    )
+    assert (
+        operation.description == "(10) owed by (baptiste, antoine), credited to (renan)"
+    )
+    assert operation.changes(ledger_state) == [
+        BalanceChange("renan", Decimal("10")),
+        BalanceChange("baptiste", Decimal("-5")),
+        BalanceChange("antoine", Decimal("-5")),
+    ]
+
+
+def test__operations__ChangeBalances__two_to_two(ledger_state):
+    operation = ChangeBalances(
+        amount=10, credit_to=["renan", "baptiste"], debt_from=["baptiste", "antoine"]
+    )
+    assert (
+        operation.description
+        == "(10) owed by (baptiste, antoine), credited to (renan, baptiste)"
+    )
+    assert operation.changes(ledger_state) == [
+        BalanceChange("renan", Decimal("5")),
+        BalanceChange("baptiste", Decimal("5")),
+        BalanceChange("baptiste", Decimal("-5")),
+        BalanceChange("antoine", Decimal("-5")),
+    ]
+
+
+def test__operations__ChangeBalances__two_to_all(ledger_state):
+    operation = ChangeBalances(
+        amount=10, credit_to=None, debt_from=["baptiste", "antoine"]
+    )
+    assert (
+        operation.description == "(10) owed by (baptiste, antoine), credited to (All)"
+    )
+    assert operation.changes(ledger_state) == [
+        BalanceChange("antoine", Decimal("3.34")),
+        BalanceChange("baptiste", Decimal("3.33")),
+        BalanceChange("renan", Decimal("3.33")),
+        BalanceChange("baptiste", Decimal("-5")),
+        BalanceChange("antoine", Decimal("-5")),
+    ]
+
+
+def test__operations__ChangeBalances__all_to_one(ledger_state):
+    operation = ChangeBalances(amount=10, credit_to=["antoine"], debt_from=None)
+    assert operation.description == "(10) owed by (All), credited to (antoine)"
+    assert operation.changes(ledger_state) == [
+        BalanceChange("antoine", Decimal("10")),
+        BalanceChange("antoine", Decimal("-3.34")),
+        BalanceChange("baptiste", Decimal("-3.33")),
+        BalanceChange("renan", Decimal("-3.33")),
+    ]
+
+
+def test__operations__ChangeBalances__all_to_two(ledger_state):
+    operation = ChangeBalances(
+        amount=10, credit_to=["antoine", "baptiste"], debt_from=None
+    )
+    assert (
+        operation.description == "(10) owed by (All), credited to (antoine, baptiste)"
+    )
+    assert operation.changes(ledger_state) == [
+        BalanceChange("antoine", Decimal("5")),
+        BalanceChange("baptiste", Decimal("5")),
+        BalanceChange("antoine", Decimal("-3.34")),
+        BalanceChange("baptiste", Decimal("-3.33")),
+        BalanceChange("renan", Decimal("-3.33")),
+    ]
+
+
+def test__operations__ChangeBalances__all_to_all(ledger_state):
+    operation = ChangeBalances(amount=10, credit_to=None, debt_from=None)
+    assert operation.description == "(10) owed by (All), credited to (All)"
+    assert operation.changes(ledger_state) == [
+        BalanceChange("antoine", Decimal("3.34")),
+        BalanceChange("baptiste", Decimal("3.33")),
+        BalanceChange("renan", Decimal("3.33")),
+        BalanceChange("antoine", Decimal("-3.34")),
+        BalanceChange("baptiste", Decimal("-3.33")),
+        BalanceChange("renan", Decimal("-3.33")),
+    ]
+
+
+def test__operations__SharedExpense(ledger_state):
+    operation = SharedExpense(amount=100, by="antoine", subject="renting a van")
+    assert operation.description == "antoine has paid 100 for renting a van"
+    assert operation.changes(ledger_state) == [
+        BalanceChange("antoine", Decimal("100")),
+        BalanceChange("antoine", Decimal("-33.34")),
+        BalanceChange("baptiste", Decimal("-33.33")),
+        BalanceChange("renan", Decimal("-33.33")),
+    ]
+
+
+def test__operations__Transfer(ledger_state):
+    operation = Transfer(amount=100, by="baptiste", to="antoine")
+    assert operation.description == "baptiste has sent 100 to antoine"
+    assert operation.changes(ledger_state) == [
+        BalanceChange("baptiste", Decimal("100")),
+        BalanceChange("antoine", Decimal("-100")),
+    ]
+
+
+# ------------------------ ledger ------------------------
+
+
+@fixture
+def ledger():
     ledger = Ledger()
-    ledger.add_account("antoine")
-    ledger.add_account("baptiste")
-    ledger.add_account("renan")
+    ledger.apply(AddAccount("antoine"))
+    ledger.apply(AddAccount("baptiste"))
+    ledger.apply(AddAccount("renan"))
     return ledger
-
-
-@pytest.fixture
-def ledger(new_ledger):
-    new_ledger.record_shared_expense(amount=12, by="antoine")
-    return new_ledger
-
-
-@pytest.fixture
-def saved_ledger(ledger, tmp_ledger_file):
-    ledger.save_to_file()
-    return ledger
-
-
-# --------
 
 
 def test__Ledger__create():
     ledger = Ledger()
-    assert ledger.as_dict() == {}
+    assert ledger.state == {}
 
 
-def test__Ledger__as_dict(ledger):
-    assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
+def test__Ledger__add_account(ledger):
+    ledger.apply(AddAccount("kriti"))
+    assert list(ledger.state.keys()) == ["antoine", "baptiste", "renan", "kriti"]
 
 
-# -------- IOs
+def test__Ledger__add_account__error(ledger):
+    with raises(RuntimeError):
+        ledger.apply(AddAccount("antoine"))
 
 
-def test__Ledger__file_IO(ledger, mocker, tmp_path):
-    assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
-    ledger.save_to_file()
-    loaded_ledger = Ledger.load_from_file()
-    assert loaded_ledger.as_dict() == ledger.as_dict()
+def test__Ledger__remove_account(ledger):
+    ledger.apply(RemoveAccount("antoine"))
+    assert list(ledger.state.keys()) == ["baptiste", "renan"]
 
 
-def test__Ledger__context_manager(saved_ledger):
-    assert saved_ledger.as_dict() == {"antoine": 8.0, "baptiste": -4.0, "renan": -4.0}
-    with Ledger.edit() as managed_ledger:
-        managed_ledger.record_shared_expense(amount=21, by="antoine")
-    loaded_ledger = Ledger.load_from_file()
-    assert loaded_ledger.as_dict() == {
-        "antoine": 22.0,
-        "baptiste": -11.0,
-        "renan": -11.0,
+def test__Ledger__remove_account__error(ledger):
+    with raises(RuntimeError):
+        ledger.apply(RemoveAccount("kriti"))
+    ledger.apply(Transfer(by="antoine", to="renan", amount=10))
+    with raises(RuntimeError):
+        ledger.apply(RemoveAccount("antoine"))
+
+
+def test__Ledger__change_balance(ledger):
+    ledger.apply(
+        ChangeBalances(credit_to=None, debt_from=["antoine", "renan"], amount=100)
+    )
+    assert ledger.state == {
+        "antoine": Decimal("-16.66"),
+        "baptiste": Decimal("33.33"),
+        "renan": Decimal("-16.67"),
     }
 
 
-# -------- Accounts management
+def test__Ledger__shared_expense(ledger):
+    ledger.apply(SharedExpense(by="antoine", amount=100, subject="buy wood"))
+    assert ledger.state == {
+        "antoine": Decimal("66.66"),
+        "baptiste": Decimal("-33.33"),
+        "renan": Decimal("-33.33"),
+    }
 
 
-def test__Ledger__add_account():
-    ledger = Ledger()
-    antoine = ledger.add_account("antoine")
-    assert ledger.as_dict() == {"antoine": 0}
-    assert len(ledger.accounts) == 1
-    assert isinstance(antoine, Account)
-    assert antoine.name == "antoine"
-    assert antoine.balance == 0
-    nilou = ledger.add_account("nilou")
-    assert len(ledger.accounts) == 2
-    assert nilou.name == "nilou"
-    assert nilou.balance == 0
-
-    assert ledger.as_dict() == {"antoine": 0, "nilou": 0}
+def test__Ledger__transfer(ledger):
+    ledger.apply(Transfer(by="antoine", to="renan", amount=50))
+    assert ledger.state == {
+        "antoine": Decimal("50"),
+        "baptiste": Decimal("0"),
+        "renan": Decimal("-50"),
+    }
 
 
-def test__Ledger__add_account__unique_name():
-    ledger = Ledger()
-    ledger.add_account("antoine")
-    with pytest.raises(ValueError):
-        ledger.add_account("antoine")
+# ------------------------ IOs ------------------------
 
 
-def test__Ledger__get_one(ledger):
-    antoine = ledger._get_one("antoine")
-    assert isinstance(antoine, Account)
-    assert antoine.name == "antoine"
-    assert antoine.balance == 8
-    with pytest.raises(KeyError):
-        ledger._get_one("finn")
+@fixture
+def tmp_ledger_file(mocker, tmp_path):
+    mocker.patch.object(Ledger, "LEDGER_FILE", tmp_path / Ledger.LEDGER_FILE)
 
 
-def test__Ledger__get(ledger):
-    # one
-    ledger.get("antoine") == ledger.get("antoine")
-
-    # one that does not exist
-    with pytest.raises(KeyError):
-        ledger.get("god")
-
-    # list
-    assert ledger.get(["antoine", "renan"]) == [
-        Account("antoine", balance=8),
-        Account("renan", balance=-4),
-    ]
-    # list with one that does not exist
-    with pytest.raises(KeyError):
-        ledger.get(["jesus", "renan"])
-
-    # all
-    assert ledger.get("ALL") == [
-        Account("antoine", balance=8),
-        Account("baptiste", balance=-4),
-        Account("renan", balance=-4),
-    ]
+@fixture
+def ledger_with_operations(ledger):
+    for operation in [
+        AddAccount("kriti"),
+        ChangeBalances(
+            amount=50, credit_to=["antoine"], debt_from=["renan", "baptiste"]
+        ),
+        SharedExpense(by="baptiste", amount=40, subject="buy lots of coffee"),
+        Transfer(by="antoine", to="baptiste", amount=12),
+    ]:
+        ledger.apply(operation)
+    return ledger
 
 
-# balance operation
+def test__Ledger__save_to_file(ledger_with_operations, tmp_ledger_file):
+    ledger_with_operations.save_to_file()
+    # ---
+    file_content = pathlib.Path(ledger_with_operations.LEDGER_FILE).read_text()
+    assert file_content == dedent("""\
+            operation: Add Account
+            name: antoine
+            ---
+            operation: Add Account
+            name: baptiste
+            ---
+            operation: Add Account
+            name: renan
+            ---
+            operation: Add Account
+            name: kriti
+            ---
+            operation: Change Balances
+            amount: 50
+            credit_to:
+            - antoine
+            debt_from:
+            - renan
+            - baptiste
+            ---
+            operation: Shared Expense
+            amount: 40
+            by: baptiste
+            subject: buy lots of coffee
+            ---
+            operation: Money Transfer
+            amount: 12
+            by: antoine
+            to: baptiste
+            """)
 
 
-def test__Ledger__add_operation__to_one_from_one(ledger):
-    assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
-    operation = Operation(
-        amount=10, credit_to=ledger.get("antoine"), debt_from=ledger.get("baptiste")
-    )
-    ledger._record_operation(operation)
-    assert ledger.as_dict() == {"antoine": 18, "baptiste": -14, "renan": -4}
-
-
-def test__Ledger__change_balances__to_one_from_list(ledger):
-    assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
-    operation = Operation(
-        amount=10,
-        credit_to=ledger.get("antoine"),
-        debt_from=ledger.get(["baptiste", "renan"]),
-    )
-    ledger._record_operation(operation)
-    assert ledger.as_dict() == {"antoine": 18, "baptiste": -9, "renan": -9}
-
-
-def test__Ledger__change_balances__to_one_from_all(ledger):
-    assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
-    operation = Operation(
-        amount=12, credit_to=ledger.get("antoine"), debt_from=ledger.get("ALL")
-    )
-    ledger._record_operation(operation)
-    assert ledger.as_dict() == {"antoine": 16, "baptiste": -8, "renan": -8}
-
-
-def test__Ledger__change_balances__to_two_from_one(ledger):
-    assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
-    operation = Operation(
-        amount=12,
-        credit_to=ledger.get(["antoine", "renan"]),
-        debt_from=ledger.get("baptiste"),
-    )
-    ledger._record_operation(operation)
-    assert ledger.as_dict() == {"antoine": 14, "baptiste": -16, "renan": 2}
-
-
-def test__Ledger__change_balances__to_all_from_one(ledger):
-    assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
-    operation = Operation(
-        amount=12, credit_to=ledger.get("ALL"), debt_from=ledger.get("antoine")
-    )
-    ledger._record_operation(operation)
-    assert ledger.as_dict() == {"antoine": 0, "baptiste": 0, "renan": 0}
-
-
-def test__Ledger__record_shared_expense(ledger):
-    assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
-    ledger.record_shared_expense(9, "antoine")
-    assert ledger.as_dict() == {"antoine": 14, "baptiste": -7, "renan": -7}
-
-
-def test__Ledger__record_transfer(ledger):
-    assert ledger.as_dict() == {"antoine": 8, "baptiste": -4, "renan": -4}
-    ledger.record_transfer(4, "baptiste", "antoine")
-    assert ledger.as_dict() == {"antoine": 4, "baptiste": 0, "renan": -4}
+def test__Ledger__load_from_file(ledger_with_operations, tmp_ledger_file):
+    ledger_with_operations.save_to_file()
+    ledger_loaded = Ledger.load_from_file()
+    assert ledger_loaded.state == ledger_with_operations.state

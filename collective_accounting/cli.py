@@ -45,7 +45,6 @@ def add_user(name):
         with Ledger.edit() as ledger:
             ledger.add_account(name)
     except (ValueError, RuntimeError) as error:
-        # breakpoint()
         logger.error(error)
 
 
