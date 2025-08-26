@@ -6,7 +6,7 @@ from rich.live import Live
 
 from .display import build_ledger_view
 from .logging import logger
-from .models import Ledger
+from .models_next import Ledger
 from .utils import file_modification_timestamp
 
 main = click.Group()
@@ -44,24 +44,26 @@ def add_user(name):
     try:
         with Ledger.edit() as ledger:
             ledger.add_account(name)
-    except ValueError as error:
+    except (ValueError, RuntimeError) as error:
+        # breakpoint()
         logger.error(error)
 
 
 @main.command
 @click.argument("amount", type=click.FLOAT)
 @click.argument("name", type=click.STRING)
-def record_shared_expense(amount, name):
+@click.argument("subject", type=click.STRING)
+def record_shared_expense(amount, name, subject):
     """Record an expense made by a user for the whole group
 
     Rebalance the ledger so to share the cost of AMOUNT paid by NAME
 
     Example:
 
-    > accountant record-shared-expense 25 antoine
+    > accountant record-shared-expense 25 antoine "buy wood"
     """
     with Ledger.edit() as ledger:
-        ledger.record_shared_expense(amount=amount, by=name)
+        ledger.record_shared_expense(amount, name, subject)
 
 
 @main.command

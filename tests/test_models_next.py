@@ -356,9 +356,9 @@ def test__operations__Transfer(ledger_state):
 @fixture
 def ledger():
     ledger = Ledger()
-    ledger.record_operation(AddAccount("antoine"))
-    ledger.record_operation(AddAccount("baptiste"))
-    ledger.record_operation(AddAccount("renan"))
+    ledger.apply(AddAccount("antoine"))
+    ledger.apply(AddAccount("baptiste"))
+    ledger.apply(AddAccount("renan"))
     return ledger
 
 

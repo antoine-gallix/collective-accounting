@@ -1,5 +1,6 @@
 import pathlib
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
 from copy import copy
 from dataclasses import asdict, dataclass, field
 from decimal import Decimal
@@ -9,7 +10,7 @@ import funcy
 import yaml
 
 from .logging import logger
-from .utils import Amount, divide
+from .utils import Amount, divide, round_to_cent
 
 type Name = str
 
@@ -62,7 +63,7 @@ class LedgerState(Dict[str, Decimal]):
         del self[name]
 
     def _change_balance(self, name: str, amount: Amount):
-        logger.info(f"changing balance of {name!r}: {amount:+}")
+        logger.info(f"balance change: {name!r} {amount:+}")
         try:
             self[name] += Decimal(amount)
         except KeyError:
@@ -97,8 +98,10 @@ class Operation(ABC):
 
     TYPE: ClassVar[str]
 
+    def __str__(self):
+        return f"{self.TYPE}: {self.description}"
+
     @property
-    @abstractmethod
     def description(self) -> str: ...
 
     @abstractmethod
@@ -154,7 +157,7 @@ class ChangeBalances(Operation):
 
     @property
     def description(self):
-        return f"transfering credit ({self.amount}) from ({'All' if self.debt_from is None else ', '.join(self.debt_from)}) to ({'All' if self.credit_to is None else ', '.join(self.credit_to)})"
+        return f"({self.amount}) owed by ({'All' if self.debt_from is None else ', '.join(self.debt_from)}), credited to ({'All' if self.credit_to is None else ', '.join(self.credit_to)})"
 
     def changes(self, accounts: LedgerState) -> ChangeSet:
         creditors = list(accounts.keys()) if self.credit_to is None else self.credit_to
@@ -181,7 +184,7 @@ class SharedExpense(Operation):
 
     @property
     def description(self):
-        return f"{self.by} paid {self.amount} for {self.subject}"
+        return f"{self.by} has paid {self.amount} for {self.subject}"
 
     def changes(self, accounts: LedgerState):
         return ChangeBalances(
@@ -198,7 +201,7 @@ class Transfer(Operation):
 
     @property
     def description(self):
-        return f"{self.by} sends {self.amount} to {self.to}"
+        return f"{self.by} has sent {self.amount} to {self.to}"
 
     def changes(self, accounts: LedgerState):
         return ChangeBalances(
@@ -257,22 +260,30 @@ class Ledger:
         return operation_class(**operation_dict)
 
     @classmethod
-    def load_from_file(cls):
+    def load_from_file(cls) -> Self:
         logger.info(f"loading operations from file: {cls.LEDGER_FILE}")
         operation_dicts = yaml.load_all(
             pathlib.Path(cls.LEDGER_FILE).read_text(), Loader=yaml.Loader
         )
         operations = funcy.map(cls._load_operation_from_dict, operation_dicts)
-        logger.info("replay operations")
+        logger.info("replaying operations")
         ledger = cls()
         for operation in operations:
-            ledger.record_operation(operation)
+            ledger.apply(operation)
+        logger.info("ledger loaded")
         return ledger
+
+    @classmethod
+    @contextmanager  # type: ignore
+    def edit(cls) -> Self:  # type: ignore
+        ledger = cls.load_from_file()
+        yield ledger  # type: ignore
+        ledger.save_to_file()
 
     # ------------------------ record ------------------------
 
-    def record_operation(self, operation):
-        logger.info(f"recording operation into ledger: {operation}")
+    def apply(self, operation):
+        logger.info(f"apply operation: {operation}")
         try:
             changes = operation.changes(self.state)
             new_state = self.state.apply_changeset(changes)
@@ -282,3 +293,18 @@ class Ledger:
         self.records.append(
             LedgerRecord(operation=operation, changes=changes, state=new_state)
         )
+
+    # ------------------------ convenience ------------------------
+
+    def _record_operation(self, operation):
+        logger.info(f"recording operation: {operation}")
+        self.apply(operation)
+
+    def add_account(self, name):
+        self._record_operation(AddAccount(name))
+
+    def record_shared_expense(self, amount, name, subject):
+        self._record_operation(SharedExpense(round_to_cent(amount), name, subject))
+
+    def record_transfer(self, amount, by, to):
+        self._record_operation(Transfer(round_to_cent(amount), by, to))
