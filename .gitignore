@@ -1,7 +1,3 @@
-dev.py
-dev_*.py
-ledger.pkl
-
 # --- github python ignore template ---
 
 # Byte-compiled / optimized / DLL files
@@ -211,3 +207,12 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+# ------------------------ manual ignore ------------------------
+
+dev.py
+dev_*.py
+ledger.pkl
+ledger.yml
+
