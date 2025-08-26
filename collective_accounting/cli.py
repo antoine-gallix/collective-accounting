@@ -6,7 +6,7 @@ from rich.live import Live
 
 from .display import build_ledger_view
 from .logging import logger
-from .models_next import Ledger
+from .models import Ledger
 from .utils import file_modification_timestamp
 
 main = click.Group()

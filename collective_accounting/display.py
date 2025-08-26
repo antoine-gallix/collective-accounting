@@ -45,8 +45,10 @@ def make_balance_view(ledger):
 
 def make_operation_view(ledger):
     table = Table.grid(padding=(0, 5))
-    for i, operation in reversed(list(enumerate(ledger.operations, start=1))):
-        table.add_row(str(i), operation.tag)
+    for i, operation in reversed(
+        list(enumerate(funcy.pluck_attr("operation", ledger.records), start=1))
+    ):
+        table.add_row(str(i), str(operation))
     return table
 
 
