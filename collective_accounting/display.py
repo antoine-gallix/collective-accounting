@@ -11,21 +11,11 @@ from .models import Ledger
 from .utils import file_creation_timestamp, file_modification_timestamp
 
 
-def format_balance(balance):
-    balance = float(balance)
-    formated = Text(f"{balance:+.2f}")
-    if balance > 0:
-        formated.style = "green"
-    elif balance < 0:
-        formated.style = "red"
-    return formated
-
-
-def format_timestamp(timestamp):
+def format_timestamp(timestamp) -> str:
     return arrow.get(timestamp).to("local").format("YYYY-MM-DD HH:mm:ss")
 
 
-def make_file_info_view(ledger):
+def make_file_info_view(ledger) -> Table:
     table = Table.grid(padding=(0, 5))
     table.add_row("file", str(Ledger.LEDGER_FILE))
     table.add_row(
@@ -38,13 +28,24 @@ def make_file_info_view(ledger):
     return table
 
 
-def make_balance_view(ledger):
+def format_balance(balance) -> Text:
+    balance_float = float(balance)
+    if balance_float > 0:
+        return Text(f"{balance:+.2f}", style="green")
+    elif balance_float < 0:
+        return Text(f"{balance:+.2f}", style="red")
+    else:
+        return Text(str(balance), style="blue")
+
+
+def make_balance_view(ledger) -> Columns:
     return Columns(
-        f"{name}:{format_balance(balance)}" for name, balance in ledger.state.items()
+        Panel((Text(name) + ":" + format_balance(balance)))
+        for name, balance in ledger.state.items()
     )
 
 
-def make_operation_view(ledger):
+def make_operation_view(ledger) -> Table:
     table = Table.grid(padding=(0, 5))
     for i, operation in reversed(
         list(enumerate(funcy.pluck_attr("operation", ledger.records), start=1))
