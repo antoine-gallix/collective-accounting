@@ -427,7 +427,8 @@ def tmp_ledger_file(mocker, tmp_path):
     mocker.patch.object(Ledger, "LEDGER_FILE", tmp_path / Ledger.LEDGER_FILE)
 
 
-def test__Ledger__save_to_file(ledger, tmp_ledger_file):
+@fixture
+def ledger_with_operations(ledger):
     for operation in [
         AddAccount("kriti"),
         ChangeBalances(
@@ -437,9 +438,13 @@ def test__Ledger__save_to_file(ledger, tmp_ledger_file):
         Transfer(by="antoine", to="baptiste", amount=12),
     ]:
         ledger.record_operation(operation)
-    ledger.save_to_file()
+    return ledger
+
+
+def test__Ledger__save_to_file(ledger_with_operations, tmp_ledger_file):
+    ledger_with_operations.save_to_file()
     # ---
-    file_content = pathlib.Path(ledger.LEDGER_FILE).read_text()
+    file_content = pathlib.Path(ledger_with_operations.LEDGER_FILE).read_text()
     assert file_content == dedent("""\
             operation: Add Account
             name: antoine
@@ -471,3 +476,9 @@ def test__Ledger__save_to_file(ledger, tmp_ledger_file):
             by: antoine
             to: baptiste
             """)
+
+
+def test__Ledger__load_from_file(ledger_with_operations, tmp_ledger_file):
+    ledger_with_operations.save_to_file()
+    ledger_loaded = Ledger.load_from_file()
+    assert ledger_loaded.state == ledger_with_operations.state
