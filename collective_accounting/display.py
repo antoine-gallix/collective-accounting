@@ -1,5 +1,6 @@
 import arrow
 import funcy
+from funcy.seqs import defaultdict
 from rich.align import Align
 from rich.columns import Columns
 from rich.layout import Layout
@@ -7,7 +8,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from .models import Ledger
+from .models import AddAccount, Ledger, SharedExpense, Transfer
 from .utils import file_creation_timestamp, file_modification_timestamp
 
 
@@ -45,12 +46,22 @@ def make_balance_view(ledger) -> Columns:
     )
 
 
+OPERATION_COLOR = defaultdict(
+    str, {AddAccount: "cyan", Transfer: "green", SharedExpense: "yellow"}
+)
+
+
 def make_operation_view(ledger) -> Table:
     table = Table.grid(padding=(0, 5))
     for i, operation in reversed(
         list(enumerate(funcy.pluck_attr("operation", ledger.records), start=1))
     ):
-        table.add_row(str(i), str(operation))
+        operation_color = OPERATION_COLOR[operation.__class__]
+        table.add_row(
+            str(i),
+            Text(operation.TYPE, style=operation_color),
+            operation.description,
+        )
     return table
 
 
