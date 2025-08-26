@@ -261,12 +261,12 @@ class Ledger:
 
     @classmethod
     def load_from_file(cls) -> Self:
-        logger.info(f"loading operations from file: {cls.LEDGER_FILE}")
+        logger.info(f"load operations from file: {cls.LEDGER_FILE}")
         operation_dicts = yaml.load_all(
             pathlib.Path(cls.LEDGER_FILE).read_text(), Loader=yaml.Loader
         )
         operations = funcy.map(cls._load_operation_from_dict, operation_dicts)
-        logger.debug("replaying operations")
+        logger.debug("replay operations")
         ledger = cls()
         for operation in operations:
             ledger.apply(operation)
@@ -297,7 +297,7 @@ class Ledger:
     # ------------------------ convenience ------------------------
 
     def _record_operation(self, operation):
-        logger.info(f"recording operation: {operation}")
+        logger.info(f"record operation: {operation}")
         self.apply(operation)
 
     def add_account(self, name):
