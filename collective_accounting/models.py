@@ -63,7 +63,7 @@ class LedgerState(Dict[str, Decimal]):
         del self[name]
 
     def _change_balance(self, name: str, amount: Amount):
-        logger.info(f"balance change: {name!r} {amount:+}")
+        logger.debug(f"balance change: {name!r} {amount:+}")
         try:
             self[name] += Decimal(amount)
         except KeyError:
@@ -266,11 +266,11 @@ class Ledger:
             pathlib.Path(cls.LEDGER_FILE).read_text(), Loader=yaml.Loader
         )
         operations = funcy.map(cls._load_operation_from_dict, operation_dicts)
-        logger.info("replaying operations")
+        logger.debug("replaying operations")
         ledger = cls()
         for operation in operations:
             ledger.apply(operation)
-        logger.info("ledger loaded")
+        logger.debug("ledger loaded")
         return ledger
 
     @classmethod
@@ -283,7 +283,7 @@ class Ledger:
     # ------------------------ record ------------------------
 
     def apply(self, operation):
-        logger.info(f"apply operation: {operation}")
+        logger.debug(f"apply operation: {operation}")
         try:
             changes = operation.changes(self.state)
             new_state = self.state.apply_changeset(changes)
