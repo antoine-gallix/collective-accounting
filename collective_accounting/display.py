@@ -1,5 +1,7 @@
 import arrow
+import funcy
 from rich.align import Align
+from rich.columns import Columns
 from rich.layout import Layout
 from rich.panel import Panel
 from rich.table import Table
@@ -9,11 +11,12 @@ from .models import Ledger
 from .utils import file_creation_timestamp, file_modification_timestamp
 
 
-def format_balance(credit):
-    formated = Text(f"{credit:+.2f}")
-    if credit > 0:
+def format_balance(balance):
+    balance = float(balance)
+    formated = Text(f"{balance:+.2f}")
+    if balance > 0:
         formated.style = "green"
-    elif credit < 0:
+    elif balance < 0:
         formated.style = "red"
     return formated
 
@@ -36,11 +39,9 @@ def make_file_info_view(ledger):
 
 
 def make_balance_view(ledger):
-    table = Table()
-    for account in ledger.accounts:
-        table.add_column(account.name)
-    table.add_row(*(format_balance(account.balance) for account in ledger.accounts))
-    return table
+    return Columns(
+        f"{name}:{format_balance(balance)}" for name, balance in ledger.state.items()
+    )
 
 
 def make_operation_view(ledger):
