@@ -213,6 +213,6 @@ __marimo__/
 
 dev.py
 dev_*.py
-ledger.pkl
 ledger.yml
+ledger_*.yml
 
