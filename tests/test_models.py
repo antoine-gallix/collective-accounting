@@ -106,23 +106,6 @@ def test__LedgerState__check_balances(ledger_state):
     ledger_state._check_balances()
 
 
-def test__LedgerState__pot_creation(ledger_state):
-    assert ledger_state.has_pot == False
-    ledger_state._add_pot()
-    assert ledger_state.has_pot == True
-
-
-def test__LedgerState__pot_name_exclusive(ledger_state):
-    with raises(RuntimeError):
-        ledger_state._add_account("POT")
-
-
-def test__LedgerState__pot_creation__two_times(ledger_state):
-    ledger_state._add_pot()
-    with raises(RuntimeError):
-        ledger_state._add_pot()
-
-
 # ------------------------ accounts and changes ------------------------
 
 
@@ -375,6 +358,31 @@ def test__operations__Transfer(ledger_state):
         BalanceChange("baptiste", Money("100")),
         BalanceChange("antoine", Money("-100")),
     ]
+
+
+def test__operation__CreatePot(ledger_state):
+    operation = CreatePot()
+    assert operation.description == ""
+    assert operation.changes(ledger_state) == [
+        BalanceChange("baptiste", Money("")),
+        BalanceChange("antoine", Money("")),
+        BalanceChange("POT", Money("")),
+    ]
+
+
+def test__operation__CreatePot__reserved_name(ledger_state):
+    operation = AddAccount("POT")
+    with raises(RuntimeError):
+        assert operation.changes(ledger_state)
+
+
+def test__operation__shared_expense__with_pot(ledger_state): ...
+
+
+def test__operation__Reimburse(ledger_state): ...
+
+
+def test__operation__RequestContribution(ledger_state): ...
 
 
 # ------------------------ ledger ------------------------
