@@ -56,10 +56,18 @@ def make_operation_view(ledger) -> Table:
     for i, operation in reversed(
         list(enumerate(funcy.pluck_attr("operation", ledger.records), start=1))
     ):
-        operation_color = OPERATION_COLOR[operation.__class__]
+        match operation:
+            case AddAccount():
+                style = "cyan"
+            case Transfer():
+                style = "green"
+            case SharedExpense():
+                style = "yellow"
+            case _:
+                style = ""
         table.add_row(
             str(i),
-            Text(operation.TYPE, style=operation_color),
+            Text(operation.TYPE, style=style),
             operation.description,
         )
     return table
@@ -89,24 +97,36 @@ def build_ledger_view():
     except FileNotFoundError:
         return Text("no ledger file", style="red")
 
-    layout = Layout()
-    layout.split_column(
+    screen = Layout()
+    screen.split_row(
+        Layout(name="left", ratio=2),
         Layout(
-            CenteredPanel(make_file_info_view(ledger), title="file"),
+            name="right",
+            ratio=3,
+        ),
+    )
+    screen.get("left").split_column(
+        Layout(
+            name="left_top",
             size=5,
         ),
         Layout(
-            CenteredPanel(make_balance_view(ledger), title="balances"),
-            size=7,
-        ),
-        Layout(
-            CenteredPanel(
-                make_operation_view(ledger),
-                title="operations",
-                align_options={"vertical": "top"},
-                panel_options={"padding": (1, 0)},
-            )
+            name="left_bottom",
         ),
     )
 
-    return layout
+    screen.get("right").update(
+        CenteredPanel(
+            make_operation_view(ledger),
+            title="operations",
+            align_options={"vertical": "top"},
+            panel_options={"padding": (1, 0)},
+        )
+    )
+    screen.get("left_top").update(
+        CenteredPanel(make_file_info_view(ledger), title="file")
+    )
+    screen.get("left_bottom").update(
+        CenteredPanel(make_balance_view(ledger), title="balances")
+    )
+    return screen
