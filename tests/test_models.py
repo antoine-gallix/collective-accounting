@@ -106,6 +106,23 @@ def test__LedgerState__check_balances(ledger_state):
     ledger_state._check_balances()
 
 
+def test__LedgerState__pot_creation(ledger_state):
+    assert ledger_state.has_pot == False
+    ledger_state._add_pot()
+    assert ledger_state.has_pot == True
+
+
+def test__LedgerState__pot_name_exclusive(ledger_state):
+    with raises(RuntimeError):
+        ledger_state._add_account("POT")
+
+
+def test__LedgerState__pot_creation__two_times(ledger_state):
+    ledger_state._add_pot()
+    with raises(RuntimeError):
+        ledger_state._add_pot()
+
+
 # ------------------------ accounts and changes ------------------------
 
 
@@ -202,6 +219,13 @@ def test__operations__RemoveAccount(ledger_state):
     assert operation.TYPE == "Remove Account"
     assert operation.description == "kriti"
     assert operation.changes(ledger_state) == [AccountRemoval("kriti")]
+
+
+def test__operations__AddPot(ledger_state):
+    operation = AddPot()
+    assert operation.TYPE == "Add Pot"
+    assert operation.description == ""
+    assert operation.changes(ledger_state) == [PotCreation()]
 
 
 def test__operations__ChangeBalances__one_to_one(ledger_state):
