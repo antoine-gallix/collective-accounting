@@ -107,9 +107,6 @@ class Operation(ABC):
     @abstractmethod
     def changes(self, accounts: LedgerState) -> ChangeSet: ...
 
-    def as_dict(self) -> dict:
-        return {"operation": self.TYPE} | asdict(self)
-
 
 @dataclass
 class AddAccount(Operation):
@@ -221,6 +218,32 @@ OPERATION_NAME_TO_CLASS = {
 }
 
 
+def decimal_to_float(obj):
+    if isinstance(obj, Decimal):
+        return float(obj)
+    else:
+        return obj
+
+
+def float_to_decimal(obj):
+    if isinstance(obj, float):
+        return round_to_cent(obj)
+    else:
+        return obj
+
+
+def operation_as_dict(operation: Operation) -> dict:
+    dict_ = {"operation": operation.TYPE} | asdict(operation)
+    return funcy.walk_values(decimal_to_float, dict_)  # type:ignore
+
+
+def load_operation_from_dict(dict_) -> Operation:
+    operation_name = dict_.pop("operation")
+    operation_class = OPERATION_NAME_TO_CLASS[operation_name]
+    dict_transformed = funcy.walk_values(float_to_decimal, dict_)
+    return operation_class(**dict_transformed)  # type:ignore
+
+
 @dataclass
 class LedgerRecord:
     state: LedgerState
@@ -242,22 +265,16 @@ class Ledger:
 
     # ------------------------ IOs ------------------------
 
-    def _operations_as_dict(self):
-        return funcy.map(Operation.as_dict, funcy.pluck_attr("operation", self.records))
-
     def save_to_file(self):
+        operations_as_dicts = funcy.map(
+            operation_as_dict, funcy.pluck_attr("operation", self.records)
+        )
         pathlib.Path(self.LEDGER_FILE).write_text(
             yaml.dump_all(
-                self._operations_as_dict(),
+                operations_as_dicts,
                 sort_keys=False,
             )
         )
-
-    @staticmethod
-    def _load_operation_from_dict(operation_dict):
-        operation_name = operation_dict.pop("operation")
-        operation_class = OPERATION_NAME_TO_CLASS[operation_name]
-        return operation_class(**operation_dict)
 
     @classmethod
     def load_from_file(cls) -> Self:
@@ -265,7 +282,7 @@ class Ledger:
         operation_dicts = yaml.load_all(
             pathlib.Path(cls.LEDGER_FILE).read_text(), Loader=yaml.Loader
         )
-        operations = funcy.map(cls._load_operation_from_dict, operation_dicts)
+        operations = funcy.map(load_operation_from_dict, operation_dicts)
         logger.debug("replay operations")
         ledger = cls()
         for operation in operations:
