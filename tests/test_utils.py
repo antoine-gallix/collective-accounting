@@ -1,11 +1,32 @@
 from decimal import Decimal
 
 from collective_accounting.utils import (
+    Money,
     divide,
     file_creation_timestamp,
     file_modification_timestamp,
     round_to_cent,
 )
+
+# ------------------------ Money ------------------------
+
+
+def test__Money__creation():
+    assert Money(5) == 5 == Decimal("5")
+    assert Money(-5) == -5 == Decimal("-5")
+    assert Money(3.5) == Decimal("3.5")
+    assert Money(12.345678) == Decimal("12.35")
+
+
+def test__Money__str():
+    assert str(Money(3.5)) == "3.50€"
+
+
+def test__Money__divide():
+    assert Money(9).divide(3) == [Money(3), Money(3), Money(3)]
+    assert Money(10).divide(3) == [Money("3.34"), Money("3.33"), Money("3.33")]
+    assert Money(20).divide(3) == [Money("6.66"), Money("6.67"), Money("6.67")]
+
 
 # ------------------------ decimal ------------------------
 
