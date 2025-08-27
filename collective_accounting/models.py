@@ -3,14 +3,13 @@ from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from copy import copy
 from dataclasses import asdict, dataclass, field
-from decimal import Decimal
 from typing import ClassVar, Collection, Dict, Self
 
 import funcy
 import yaml
 
 from .logging import logger
-from .utils import Amount, divide, round_to_cent
+from .utils import Money
 
 type Name = str
 
@@ -32,13 +31,13 @@ class AccountRemoval(AtomicChange):
 @dataclass
 class BalanceChange(AtomicChange):
     name: Name
-    amount: Amount
+    amount: Money
 
 
 type ChangeSet = Collection[AtomicChange]
 
 
-class LedgerState(Dict[str, Decimal]):
+class LedgerState(Dict[str, Money]):
     """A collection of accounts with a balance. Represents the state of a ledger at a given point in time."""
 
     def __str__(self):
@@ -53,7 +52,7 @@ class LedgerState(Dict[str, Decimal]):
             raise ValueError(f"name string is empty: {name}")
         if name in self:
             raise RuntimeError(f"account already exists: {name}")
-        self[name] = Decimal(0)
+        self[name] = Money(0)
 
     def _remove_account(self, name: str):
         if name not in self:
@@ -62,10 +61,10 @@ class LedgerState(Dict[str, Decimal]):
             raise RuntimeError(f"account has non-null balance: {name}")
         del self[name]
 
-    def _change_balance(self, name: str, amount: Amount):
+    def _change_balance(self, name: str, amount: Money):
         logger.debug(f"balance change: {name!r} {amount:+}")
         try:
-            self[name] += Decimal(amount)
+            self[name] += amount
         except KeyError:
             raise RuntimeError(f"account with name {name} does not exists")
 
@@ -148,7 +147,7 @@ class ChangeBalances(Operation):
     """
 
     TYPE: ClassVar[str] = "Change Balances"
-    amount: Amount
+    amount: Money
     credit_to: Collection[Name] | None
     debt_from: Collection[Name] | None
 
@@ -162,12 +161,12 @@ class ChangeBalances(Operation):
         return [
             BalanceChange(name=creditor, amount=balance_change)
             for creditor, balance_change in zip(
-                creditors, divide(self.amount, len(creditors))
+                creditors, self.amount.divide_with_no_rest(len(creditors))
             )
         ] + [
             BalanceChange(name=debitor, amount=-balance_change)
             for debitor, balance_change in zip(
-                debitors, divide(self.amount, len(debitors))
+                debitors, self.amount.divide_with_no_rest(len(debitors))
             )
         ]
 
@@ -175,7 +174,7 @@ class ChangeBalances(Operation):
 @dataclass
 class SharedExpense(Operation):
     TYPE: ClassVar[str] = "Shared Expense"
-    amount: Amount
+    amount: Money
     by: Name
     subject: str
 
@@ -192,7 +191,7 @@ class SharedExpense(Operation):
 @dataclass
 class Transfer(Operation):
     TYPE: ClassVar[str] = "Money Transfer"
-    amount: Amount
+    amount: Money
     by: Name
     to: Name
 
@@ -218,29 +217,29 @@ OPERATION_NAME_TO_CLASS = {
 }
 
 
-def decimal_to_float(obj):
-    if isinstance(obj, Decimal):
+def money_to_float(obj):
+    if isinstance(obj, Money):
         return float(obj)
     else:
         return obj
 
 
-def float_to_decimal(obj):
+def float_to_money(obj):
     if isinstance(obj, float):
-        return round_to_cent(obj)
+        return Money(obj)
     else:
         return obj
 
 
 def operation_as_dict(operation: Operation) -> dict:
     dict_ = {"operation": operation.TYPE} | asdict(operation)
-    return funcy.walk_values(decimal_to_float, dict_)  # type:ignore
+    return funcy.walk_values(money_to_float, dict_)  # type:ignore
 
 
 def load_operation_from_dict(dict_) -> Operation:
     operation_name = dict_.pop("operation")
     operation_class = OPERATION_NAME_TO_CLASS[operation_name]
-    dict_transformed = funcy.walk_values(float_to_decimal, dict_)
+    dict_transformed = funcy.walk_values(float_to_money, dict_)
     return operation_class(**dict_transformed)  # type:ignore
 
 
@@ -321,7 +320,7 @@ class Ledger:
         self._record_operation(AddAccount(name))
 
     def record_shared_expense(self, amount, name, subject):
-        self._record_operation(SharedExpense(round_to_cent(amount), name, subject))
+        self._record_operation(SharedExpense(Money(amount), name, subject))
 
     def record_transfer(self, amount, by, to):
-        self._record_operation(Transfer(round_to_cent(amount), by, to))
+        self._record_operation(Transfer(Money(amount), by, to))

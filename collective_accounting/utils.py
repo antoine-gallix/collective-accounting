@@ -1,15 +1,12 @@
 import pathlib
 from decimal import Decimal
+from typing import Self
 
 import funcy
 
 # ------------------------ decimal ------------------------
 
 type Amount = Decimal | int
-
-
-def round_to_cent(amount):
-    return Decimal(amount).quantize(Decimal("0.01"))
 
 
 class Money(Decimal):
@@ -28,9 +25,21 @@ class Money(Decimal):
     def __add__(self, something):
         return self.__class__(super().__add__(something))
 
-    def divide(self, by: int) -> list[Decimal]:
+    def __sub__(self, something):
+        return self.__class__(super().__sub__(something))
+
+    def __neg__(self):
+        return self.__class__(super().__neg__())
+
+    def __truediv__(self, something):
+        return self.__class__(super().__truediv__(something))
+
+    def __mul__(self, something):
+        return self.__class__(super().__mul__(something))
+
+    def divide_with_no_rest(self, by: int) -> list[Self]:
         """Split a into parts as equal as possible, without error, rounded to cent"""
-        quantized_result = round_to_cent(self / by)
+        quantized_result = self / by
         remainder = self - quantized_result * by
         return funcy.lmap(
             self.__class__,
@@ -39,15 +48,6 @@ class Money(Decimal):
                 funcy.repeat(quantized_result, by - 1),
             ),
         )
-
-
-def divide(amount: Amount, denominator: int) -> list[Decimal]:
-    """Split a decimal amount into parts as equal as possible, without error, rounded to cent"""
-    quantized_result = round_to_cent(amount / denominator)
-    remainder = amount - quantized_result * denominator
-    return funcy.lconcat(
-        [quantized_result + remainder], funcy.repeat(quantized_result, denominator - 1)
-    )
 
 
 # ------------------------ ledger file ------------------------

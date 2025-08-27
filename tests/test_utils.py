@@ -2,10 +2,8 @@ from decimal import Decimal
 
 from collective_accounting.utils import (
     Money,
-    divide,
     file_creation_timestamp,
     file_modification_timestamp,
-    round_to_cent,
 )
 
 # ------------------------ Money ------------------------
@@ -23,27 +21,43 @@ def test__Money__str():
 
 
 def test__Money__divide():
-    assert Money(9).divide(3) == [Money(3), Money(3), Money(3)]
-    assert Money(10).divide(3) == [Money("3.34"), Money("3.33"), Money("3.33")]
-    assert Money(20).divide(3) == [Money("6.66"), Money("6.67"), Money("6.67")]
+    assert Money(9).divide_with_no_rest(3) == [Money(3), Money(3), Money(3)]
+    assert Money(10).divide_with_no_rest(3) == [
+        Money("3.34"),
+        Money("3.33"),
+        Money("3.33"),
+    ]
+    assert Money(20).divide_with_no_rest(3) == [
+        Money("6.66"),
+        Money("6.67"),
+        Money("6.67"),
+    ]
 
 
-def test__Money__add_type():
-    assert type(Money(9) + Money(3)) == Money
+def test__Money__add():
+    assert Money(9) + Money(3) == Money(12)
+    assert type(Money(9) + Money(3)) is Money
 
 
-# ------------------------ decimal ------------------------
+def test__Money__sub():
+    assert Money(9) - Money(3) == Money(6)
+    assert type(Money(9) - Money(3)) is Money
 
 
-def test__round_to_cent():
-    assert round_to_cent(10) == Decimal("10")
-    assert round_to_cent(10.123) == Decimal("10.12")
+def test__Money__neg():
+    assert -Money(3) == Money(-3)
+    assert type(-Money(3)) is Money
 
 
-def test__divide():
-    assert divide(Decimal(9), 3) == [Decimal(3), Decimal(3), Decimal(3)]
-    assert divide(Decimal(10), 3) == [Decimal("3.34"), Decimal("3.33"), Decimal("3.33")]
-    assert divide(Decimal(20), 3) == [Decimal("6.66"), Decimal("6.67"), Decimal("6.67")]
+def test__Money__div():
+    assert Money(9) / Money(3) == Money(3)
+    assert Money(10) / Money(3) == Money("3.33")
+    assert type(Money(9) / Money(3)) is Money
+
+
+def test__Money__mul():
+    assert Money(9) * Money(3) == Money(27)
+    assert type(Money(9) * Money(3)) is Money
 
 
 # ------------------------ file ------------------------
