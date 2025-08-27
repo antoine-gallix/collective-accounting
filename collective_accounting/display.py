@@ -105,7 +105,7 @@ def build_ledger_view():
             ratio=3,
         ),
     )
-    screen.get("left").split_column(
+    screen.get("left").split_column(  # type:ignore
         Layout(
             name="left_top",
             size=5,
@@ -115,7 +115,7 @@ def build_ledger_view():
         ),
     )
 
-    screen.get("right").update(
+    screen.get("right").update(  # type:ignore
         CenteredPanel(
             make_operation_view(ledger),
             title="operations",
@@ -123,10 +123,10 @@ def build_ledger_view():
             panel_options={"padding": (1, 0)},
         )
     )
-    screen.get("left_top").update(
+    screen.get("left_top").update(  # type:ignore
         CenteredPanel(make_file_info_view(ledger), title="file")
     )
-    screen.get("left_bottom").update(
+    screen.get("left_bottom").update(  # type:ignore
         CenteredPanel(make_balance_view(ledger), title="balances")
     )
     return screen
