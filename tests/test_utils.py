@@ -28,6 +28,10 @@ def test__Money__divide():
     assert Money(20).divide(3) == [Money("6.66"), Money("6.67"), Money("6.67")]
 
 
+def test__Money__add_type():
+    assert type(Money(9) + Money(3)) == Money
+
+
 # ------------------------ decimal ------------------------
 
 

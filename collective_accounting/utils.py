@@ -25,6 +25,9 @@ class Money(Decimal):
         a = super().__str__()
         return f"{a}{self.CURRENCY}"
 
+    def __add__(self, something):
+        return self.__class__(super().__add__(something))
+
     def divide(self, by: int) -> list[Decimal]:
         """Split a into parts as equal as possible, without error, rounded to cent"""
         quantized_result = round_to_cent(self / by)
