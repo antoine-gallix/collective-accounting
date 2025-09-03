@@ -3,7 +3,15 @@ from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from copy import copy
 from dataclasses import asdict, dataclass, field
-from typing import ClassVar, Collection, Dict, Self
+from typing import (
+    ClassVar,
+    Collection,
+    DefaultDict,
+    Dict,
+    Literal,
+    Mapping,
+    Self,
+)
 
 import funcy
 import yaml
@@ -12,36 +20,33 @@ from .logging import logger
 from .utils import Money
 
 type Name = str
-
-
-class AtomicChange(ABC):
-    """An AtomicChange is a change of state that cannot be decomposed in multiple smaller operations."""
-
-
-@dataclass
-class AccountCreation(AtomicChange):
-    name: Name
-
-
-@dataclass
-class AccountRemoval(AtomicChange):
-    name: Name
-
-
-@dataclass
-class BalanceChange(AtomicChange):
-    name: Name
-    amount: Money
-
-
-type ChangeSet = Collection[AtomicChange]
+type AccountAction = Literal["Create"] | Literal["Remove"]
+type BalanceChange = Money
+type Change = AccountAction | BalanceChange
+type ChangeSet = Mapping[Name, Change]
 
 
 class LedgerState(Dict[str, Money]):
-    """A collection of accounts with a balance. Represents the state of a ledger at a given point in time."""
+    """A collection of accounts with a balance. Represents the state of a ledger at a given point in time.
+
+    Operations on a ledger state are:
+    - addition and removal of accounts
+    - application of balanced changes to accounts
+
+    LedgerState will raise Exceptions in the following cases:
+    - add an account with name that is not a string
+    - add an account with name that is empty
+    - add an account with name that already exists
+    - remove an account that does not exist
+    - remove an account that does not have a null balance
+    """
 
     def __str__(self):
         return super().__str__()
+
+    @property
+    def has_pot(self):
+        return "POT" in self
 
     # ---
 
@@ -74,19 +79,19 @@ class LedgerState(Dict[str, Money]):
 
     # -------- changes
 
-    def apply_change(self, change: AtomicChange):
+    def _apply_change(self, name: Name, change: Change):
         match change:
-            case AccountCreation():
-                self._add_account(change.name)
-            case AccountRemoval():
-                self._remove_account(change.name)
-            case BalanceChange():
-                self._change_balance(change.name, change.amount)
+            case "Create":
+                self._add_account(name)
+            case "Remove":
+                self._remove_account(name)
+            case Money():
+                self._change_balance(name, change)
 
     def apply_changeset(self, change_set: ChangeSet) -> Self:
         next_state = copy(self)
-        for change in change_set:
-            next_state.apply_change(change)
+        for name, change in change_set.items():
+            next_state._apply_change(name, change)
         next_state._check_balances()
         return next_state
 
@@ -104,7 +109,7 @@ class Operation(ABC):
     def description(self) -> str: ...
 
     @abstractmethod
-    def changes(self, accounts: LedgerState) -> ChangeSet: ...
+    def changes(self, state: LedgerState) -> ChangeSet: ...
 
 
 @dataclass
@@ -116,8 +121,10 @@ class AddAccount(Operation):
     def description(self):
         return self.name
 
-    def changes(self, accounts: LedgerState):
-        return [AccountCreation(self.name)]
+    def changes(self, state: LedgerState):  # type:ignore
+        if self.name == "POT":
+            raise ValueError("'POT' is a reserved account name")
+        return {self.name: "Create"}
 
 
 @dataclass
@@ -129,8 +136,8 @@ class RemoveAccount(Operation):
     def description(self):
         return self.name
 
-    def changes(self, accounts: LedgerState):
-        return [AccountRemoval(self.name)]
+    def changes(self, state: LedgerState):  # type:ignore
+        return {self.name: "Remove"}
 
 
 @dataclass
@@ -155,20 +162,27 @@ class ChangeBalances(Operation):
     def description(self):
         return f"({self.amount}) owed by ({'All' if self.debt_from is None else ', '.join(self.debt_from)}), credited to ({'All' if self.credit_to is None else ', '.join(self.credit_to)})"
 
-    def changes(self, accounts: LedgerState) -> ChangeSet:
-        creditors = list(accounts.keys()) if self.credit_to is None else self.credit_to
-        debitors = list(accounts.keys()) if self.debt_from is None else self.debt_from
-        return [
-            BalanceChange(name=creditor, amount=balance_change)
-            for creditor, balance_change in zip(
-                creditors, self.amount.divide_with_no_rest(len(creditors))
-            )
-        ] + [
-            BalanceChange(name=debitor, amount=-balance_change)
-            for debitor, balance_change in zip(
-                debitors, self.amount.divide_with_no_rest(len(debitors))
-            )
-        ]
+    def changes(self, accounts: LedgerState) -> ChangeSet:  # type:ignore
+        creditors = (
+            funcy.lremove("POT", accounts.keys())
+            if self.credit_to is None
+            else self.credit_to
+        )
+        debitors = (
+            funcy.lremove("POT", accounts.keys())
+            if self.debt_from is None
+            else self.debt_from
+        )
+        changes = DefaultDict(lambda: Money("0"))  # type:ignore
+        for creditor, balance_change in zip(
+            creditors, self.amount.divide_with_no_rest(len(creditors))
+        ):
+            changes[creditor] += balance_change  # type:ignore
+        for debitor, balance_change in zip(
+            debitors, self.amount.divide_with_no_rest(len(debitors))
+        ):
+            changes[debitor] -= balance_change  # type:ignore
+        return changes
 
 
 @dataclass
@@ -182,10 +196,15 @@ class SharedExpense(Operation):
     def description(self):
         return f"{self.by} has paid {self.amount} for {self.subject}"
 
-    def changes(self, accounts: LedgerState):
-        return ChangeBalances(
-            credit_to=[self.by], debt_from=None, amount=self.amount
-        ).changes(accounts)
+    def changes(self, state: LedgerState):
+        if state.has_pot:
+            return ChangeBalances(
+                credit_to=[self.by], debt_from=["POT"], amount=self.amount
+            ).changes(state)
+        else:
+            return ChangeBalances(
+                credit_to=[self.by], debt_from=None, amount=self.amount
+            ).changes(state)
 
 
 @dataclass
@@ -199,10 +218,61 @@ class Transfer(Operation):
     def description(self):
         return f"{self.by} has sent {self.amount} to {self.to}"
 
-    def changes(self, accounts: LedgerState):
+    def changes(self, state: LedgerState):
         return ChangeBalances(
             credit_to=[self.by], debt_from=[self.to], amount=self.amount
-        ).changes(accounts)
+        ).changes(state)
+
+
+class AddPot(Operation):
+    TYPE: ClassVar[str] = "Add Pot"
+
+    @property
+    def description(self):
+        return "Add a common pot to the group"
+
+    def changes(self, state: LedgerState):
+        if state.has_pot:
+            raise RuntimeError("Ledger already has a pot")
+        else:
+            return {"POT": "Create"}
+
+
+@dataclass
+class Reimburse(Operation):
+    TYPE: ClassVar[str] = "Reimburse"
+    amount: Money
+    to: Name
+
+    @property
+    def description(self):
+        return f"Reimburse {self.amount} to {self.to} from the pot"
+
+    def changes(self, state: LedgerState):
+        if not state.has_pot:
+            raise RuntimeError("Reimburse only applies to a ledger with a pot")
+        return ChangeBalances(
+            amount=self.amount, credit_to=[self.to], debt_from=["POT"]
+        ).changes(state)
+
+
+@dataclass
+class RequestContribution(Operation):
+    TYPE: ClassVar[str] = "RequestContribution"
+    amount: Money
+
+    @property
+    def description(self):
+        return f"Request contribution of {self.amount} from everyone"
+
+    def changes(self, state: LedgerState):
+        if not state.has_pot:
+            raise RuntimeError(
+                "RequestContribution only applies to a ledger with a pot"
+            )
+        return ChangeBalances(
+            amount=self.amount * (len(state) - 1), credit_to=["POT"], debt_from=None
+        ).changes(state)
 
 
 OPERATION_NAME_TO_CLASS = {
@@ -241,6 +311,9 @@ def load_operation_from_dict(dict_) -> Operation:
     operation_class = OPERATION_NAME_TO_CLASS[operation_name]
     dict_transformed = funcy.walk_values(float_to_money, dict_)
     return operation_class(**dict_transformed)  # type:ignore
+
+
+# ------------------------ Ledger ------------------------
 
 
 @dataclass
