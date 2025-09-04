@@ -47,11 +47,12 @@ def format_balance(balance) -> Text:
         return Text(str(balance), style="blue")
 
 
+def make_balance_chip(ledger, name):
+    return Panel((Text(name) + ":" + format_balance(ledger.state[name])))
+
+
 def make_balance_view(ledger) -> Columns:
-    return Columns(
-        Panel((Text(name) + ":" + format_balance(balance)))
-        for name, balance in ledger.state.items()
-    )
+    return Columns(make_balance_chip(ledger, name) for name in ledger.state)
 
 
 def make_operation_view(ledger) -> Table:
