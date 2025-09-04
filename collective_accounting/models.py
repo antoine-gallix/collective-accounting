@@ -258,7 +258,7 @@ class Reimburse(Operation):
 
 @dataclass
 class RequestContribution(Operation):
-    TYPE: ClassVar[str] = "RequestContribution"
+    TYPE: ClassVar[str] = "Request Contribution"
     amount: Money
 
     @property
