@@ -297,8 +297,8 @@ def money_to_float(obj):
         return obj
 
 
-def float_to_money(obj):
-    if isinstance(obj, float):
+def number_to_money(obj):
+    if isinstance(obj, (float, int)):
         return Money(obj)
     else:
         return obj
@@ -312,7 +312,7 @@ def operation_as_dict(operation: Operation) -> dict:
 def load_operation_from_dict(dict_) -> Operation:
     operation_name = dict_.pop("operation")
     operation_class = OPERATION_NAME_TO_CLASS[operation_name]
-    dict_transformed = funcy.walk_values(float_to_money, dict_)
+    dict_transformed = funcy.walk_values(number_to_money, dict_)
     return operation_class(**dict_transformed)  # type:ignore
 
 
