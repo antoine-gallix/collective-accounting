@@ -283,6 +283,9 @@ OPERATION_NAME_TO_CLASS = {
         ChangeBalances,
         SharedExpense,
         Transfer,
+        AddPot,
+        Reimburse,
+        RequestContribution,
     ]
 }
 
