@@ -1,6 +1,5 @@
 import arrow
 import funcy
-from funcy.seqs import defaultdict
 from rich.align import Align
 from rich.columns import Columns
 from rich.layout import Layout
