@@ -61,21 +61,23 @@ def make_operation_view(ledger) -> Table:
         list(enumerate(funcy.pluck_attr("operation", ledger.records), start=1))
     ):
         match operation:
+            # --- edit accounts
             case AddAccount():
                 style = "cyan"
             case RemoveAccount():
                 style = "cyan"
             case AddPot():
                 style = "cyan"
-            # ---
-            case Transfer():
-                style = "green"
+            # --- spending and requesting money
             case SharedExpense():
                 style = "yellow"
-            case Reimburse():
-                style = "green"
             case RequestContribution():
                 style = "red"
+            # --- balancing
+            case Transfer():
+                style = "green"
+            case Reimburse():
+                style = "green"
             case _:
                 style = ""
         table.add_row(
