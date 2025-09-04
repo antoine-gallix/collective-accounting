@@ -8,7 +8,16 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from .models import AddAccount, Ledger, SharedExpense, Transfer
+from .models import (
+    AddAccount,
+    AddPot,
+    Ledger,
+    Reimburse,
+    RemoveAccount,
+    RequestContribution,
+    SharedExpense,
+    Transfer,
+)
 from .utils import file_creation_timestamp, file_modification_timestamp
 
 
@@ -46,11 +55,6 @@ def make_balance_view(ledger) -> Columns:
     )
 
 
-OPERATION_COLOR = defaultdict(
-    str, {AddAccount: "cyan", Transfer: "green", SharedExpense: "yellow"}
-)
-
-
 def make_operation_view(ledger) -> Table:
     table = Table.grid(padding=(0, 5))
     for i, operation in reversed(
@@ -59,10 +63,19 @@ def make_operation_view(ledger) -> Table:
         match operation:
             case AddAccount():
                 style = "cyan"
+            case RemoveAccount():
+                style = "cyan"
+            case AddPot():
+                style = "cyan"
+            # ---
             case Transfer():
                 style = "green"
             case SharedExpense():
                 style = "yellow"
+            case Reimburse():
+                style = "green"
+            case RequestContribution():
+                style = "red"
             case _:
                 style = ""
         table.add_row(
