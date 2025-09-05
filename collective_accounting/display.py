@@ -55,7 +55,7 @@ def make_balance_view(ledger):
     if ledger.state.has_pot:
         layout = Layout()
         layout.split_column(
-            Layout(make_balance_chip(ledger, "POT"), size=1),
+            Layout(Columns([make_balance_chip(ledger, "POT")]), size=3),
             Columns(
                 make_balance_chip(ledger, name)
                 for name in ledger.state
