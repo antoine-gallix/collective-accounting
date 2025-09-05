@@ -40,19 +40,31 @@ def make_file_info_view(ledger) -> Table:
 def format_balance(balance) -> Text:
     balance_float = float(balance)
     if balance_float > 0:
-        return Text(f"{balance:+.2f}", style="green")
+        return Text(str(balance), style="green")
     elif balance_float < 0:
-        return Text(f"{balance:+.2f}", style="red")
+        return Text(str(balance), style="red")
     else:
         return Text(str(balance), style="blue")
 
 
 def make_balance_chip(ledger, name):
-    return Panel((Text(name) + ":" + format_balance(ledger.state[name])))
+    return Text(name) + ":" + format_balance(ledger.state[name])
 
 
-def make_balance_view(ledger) -> Columns:
-    return Columns(make_balance_chip(ledger, name) for name in ledger.state)
+def make_balance_view(ledger):
+    if ledger.state.has_pot:
+        layout = Layout()
+        layout.split_column(
+            Layout(make_balance_chip(ledger, "POT"), size=1),
+            Columns(
+                make_balance_chip(ledger, name)
+                for name in ledger.state
+                if name != "POT"
+            ),
+        )
+        return layout
+    else:
+        return Columns(make_balance_chip(ledger, name) for name in ledger.state)
 
 
 def make_operation_view(ledger) -> Table:
