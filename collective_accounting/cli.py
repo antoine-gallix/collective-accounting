@@ -94,6 +94,15 @@ def request_contribution(amount):
 
 @main.command
 @click.argument("amount", type=click.FLOAT)
+@click.argument("name", type=click.STRING)
+def pays_contribution(amount, name):
+    """Record user sending money to the pot"""
+    with Ledger.edit() as ledger:
+        ledger.pays_contribution(amount, name)
+
+
+@main.command
+@click.argument("amount", type=click.FLOAT)
 @click.argument("by", type=click.STRING)
 @click.argument("to", type=click.STRING)
 def record_transfer(amount, by, to):
@@ -107,3 +116,19 @@ def record_transfer(amount, by, to):
     """
     with Ledger.edit() as ledger:
         ledger.record_transfer(amount=amount, by=by, to=to)
+
+
+@main.command
+@click.option("--index", type=click.INT)
+def undo(index):
+    """Undo operation
+
+    By default undo last operation
+
+    INDEX: undo operation at given index
+    """
+    with Ledger.edit() as ledger:
+        if index is not None:
+            ledger.records.pop(index - 1)
+        else:
+            ledger.records.pop()

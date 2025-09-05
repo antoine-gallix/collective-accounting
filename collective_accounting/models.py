@@ -275,6 +275,22 @@ class RequestContribution(Operation):
         ).changes(state)
 
 
+@dataclass
+class PaysContribution(Operation):
+    TYPE: ClassVar[str] = "Pays Contribution"
+    amount: Money
+    by: Name
+
+    @property
+    def description(self):
+        return f"{self.by} contribute {self.amount} to the pot"
+
+    def changes(self, state: LedgerState):
+        if not state.has_pot:
+            raise RuntimeError("PaysContribution only applies to a ledger with a pot")
+        return Transfer(amount=self.amount, by=self.by, to="POT").changes(state)
+
+
 OPERATION_NAME_TO_CLASS = {
     operation_class.TYPE: operation_class
     for operation_class in [
@@ -286,6 +302,7 @@ OPERATION_NAME_TO_CLASS = {
         AddPot,
         Reimburse,
         RequestContribution,
+        PaysContribution,
     ]
 }
 
@@ -406,3 +423,6 @@ class Ledger:
 
     def request_contribution(self, amount):
         self._record_operation(RequestContribution(Money(amount)))
+
+    def pays_contribution(self, amount, by):
+        self._record_operation(PaysContribution(Money(amount), by))

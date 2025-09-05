@@ -10,6 +10,7 @@ from collective_accounting.models import (
     Ledger,
     LedgerState,
     Money,
+    PaysContribution,
     Reimburse,
     RemoveAccount,
     RequestContribution,
@@ -324,6 +325,21 @@ def test__operation__RequestContribution(ledger_state_with_pot):
 
 def test__operation__RequestContribution__no_pot(ledger_state):
     operation = RequestContribution(Money(100))
+    with raises(RuntimeError):
+        assert operation.changes(ledger_state)
+
+
+def test__operation__PaysContribution(ledger_state_with_pot):
+    operation = PaysContribution(amount=Money(100), by="antoine")
+    assert operation.description == "Pays contribution of 100.00"
+    assert operation.changes(ledger_state_with_pot) == {
+        "antoine": Money("+100.00"),
+        "POT": Money("-100.00"),
+    }
+
+
+def test__operation__PaysContribution__no_pot(ledger_state):
+    operation = PaysContribution(amount=Money(100), by="antoine")
     with raises(RuntimeError):
         assert operation.changes(ledger_state)
 

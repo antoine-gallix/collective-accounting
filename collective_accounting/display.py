@@ -11,6 +11,7 @@ from .models import (
     AddAccount,
     AddPot,
     Ledger,
+    PaysContribution,
     Reimburse,
     RemoveAccount,
     RequestContribution,
@@ -89,6 +90,8 @@ def make_operation_view(ledger) -> Table:
             case Transfer():
                 style = "green"
             case Reimburse():
+                style = "green"
+            case PaysContribution():
                 style = "green"
             case _:
                 style = ""
