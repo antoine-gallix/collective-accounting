@@ -49,7 +49,7 @@ def add_user(name):
 
 
 @main.command
-def add_pot(name):
+def add_pot():
     """Setup shared pot for ledger"""
     try:
         with Ledger.edit() as ledger:

@@ -395,8 +395,14 @@ class Ledger:
     def add_account(self, name):
         self._record_operation(AddAccount(name))
 
+    def add_pot(self):
+        self._record_operation(AddPot())
+
     def record_shared_expense(self, amount, name, subject):
         self._record_operation(SharedExpense(Money(amount), name, subject))
 
     def record_transfer(self, amount, by, to):
         self._record_operation(Transfer(Money(amount), by, to))
+
+    def request_contribution(self, amount):
+        self._record_operation(RequestContribution(Money(amount)))
