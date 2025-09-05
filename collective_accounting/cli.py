@@ -49,6 +49,16 @@ def add_user(name):
 
 
 @main.command
+def add_pot(name):
+    """Setup shared pot for ledger"""
+    try:
+        with Ledger.edit() as ledger:
+            ledger.add_pot()
+    except (ValueError, RuntimeError) as error:
+        logger.error(error)
+
+
+@main.command
 @click.argument("amount", type=click.FLOAT)
 @click.argument("name", type=click.STRING)
 @click.argument("subject", type=click.STRING)
@@ -63,6 +73,23 @@ def record_shared_expense(amount, name, subject):
     """
     with Ledger.edit() as ledger:
         ledger.record_shared_expense(amount, name, subject)
+
+
+@main.command
+@click.argument("amount", type=click.FLOAT)
+@click.argument("name", type=click.STRING)
+def reimburse(amount, name):
+    """Record money reimbursed from the pot to a user"""
+    with Ledger.edit() as ledger:
+        ledger.reimburse(amount, name)
+
+
+@main.command
+@click.argument("amount", type=click.FLOAT)
+def request_contribution(amount):
+    """Request contribution from all account for the pot"""
+    with Ledger.edit() as ledger:
+        ledger.request_contribution(amount)
 
 
 @main.command
