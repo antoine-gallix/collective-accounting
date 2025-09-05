@@ -231,7 +231,7 @@ class AddPot(Operation):
     def description(self):
         return "Add a common pot to the group"
 
-    def changes(self, state: LedgerState):
+    def changes(self, state: LedgerState):  # type:ignore
         if state.has_pot:
             raise RuntimeError("Ledger already has a pot")
         else:
