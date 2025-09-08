@@ -17,7 +17,7 @@ def test__Money__creation():
 
 
 def test__Money__str():
-    assert str(Money(3.5)) == "3.50€"
+    assert str(Money(3.5)) == "+3.50€"
 
 
 def test__Money__divide():

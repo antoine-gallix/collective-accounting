@@ -138,7 +138,7 @@ def test__operations__AddPot(ledger_state):
 
 def test__operations__ChangeBalances__one_to_one(ledger_state):
     operation = ChangeBalances(
-        amount=Money(10), credit_to=["antoine"], debt_from=["baptiste"]
+        amount=Money(10), add_to=["antoine"], deduce_from=["baptiste"]
     )
     assert operation.TYPE == "Change Balances"
     assert operation.description == "(10.00) owed by (baptiste), credited to (antoine)"
@@ -150,7 +150,7 @@ def test__operations__ChangeBalances__one_to_one(ledger_state):
 
 def test__operations__ChangeBalances__one_to_two(ledger_state):
     operation = ChangeBalances(
-        amount=Money(10), credit_to=["antoine", "renan"], debt_from=["baptiste"]
+        amount=Money(10), add_to=["antoine", "renan"], deduce_from=["baptiste"]
     )
     assert (
         operation.description
@@ -164,7 +164,7 @@ def test__operations__ChangeBalances__one_to_two(ledger_state):
 
 
 def test__operations__ChangeBalances__one_to_all(ledger_state):
-    operation = ChangeBalances(amount=Money(10), credit_to=None, debt_from=["baptiste"])
+    operation = ChangeBalances(amount=Money(10), add_to=None, deduce_from=["baptiste"])
     assert operation.description == "(10.00) owed by (baptiste), credited to (All)"
     assert operation.changes(ledger_state) == {
         "antoine": Money("3.34"),
@@ -175,7 +175,7 @@ def test__operations__ChangeBalances__one_to_all(ledger_state):
 
 def test__operations__ChangeBalances__two_to_one(ledger_state):
     operation = ChangeBalances(
-        amount=Money(10), credit_to=["renan"], debt_from=["baptiste", "antoine"]
+        amount=Money(10), add_to=["renan"], deduce_from=["baptiste", "antoine"]
     )
     assert (
         operation.description
@@ -191,8 +191,8 @@ def test__operations__ChangeBalances__two_to_one(ledger_state):
 def test__operations__ChangeBalances__two_to_two(ledger_state):
     operation = ChangeBalances(
         amount=Money(10),
-        credit_to=["renan", "baptiste"],
-        debt_from=["baptiste", "antoine"],
+        add_to=["renan", "baptiste"],
+        deduce_from=["baptiste", "antoine"],
     )
     assert (
         operation.description
@@ -207,7 +207,7 @@ def test__operations__ChangeBalances__two_to_two(ledger_state):
 
 def test__operations__ChangeBalances__two_to_all(ledger_state):
     operation = ChangeBalances(
-        amount=Money(10), credit_to=None, debt_from=["baptiste", "antoine"]
+        amount=Money(10), add_to=None, deduce_from=["baptiste", "antoine"]
     )
     assert (
         operation.description
@@ -221,7 +221,7 @@ def test__operations__ChangeBalances__two_to_all(ledger_state):
 
 
 def test__operations__ChangeBalances__all_to_one(ledger_state):
-    operation = ChangeBalances(amount=Money(10), credit_to=["antoine"], debt_from=None)
+    operation = ChangeBalances(amount=Money(10), add_to=["antoine"], deduce_from=None)
     assert operation.description == "(10.00) owed by (All), credited to (antoine)"
     assert operation.changes(ledger_state) == {
         "antoine": Money("6.66"),
@@ -232,7 +232,7 @@ def test__operations__ChangeBalances__all_to_one(ledger_state):
 
 def test__operations__ChangeBalances__all_to_two(ledger_state):
     operation = ChangeBalances(
-        amount=Money(10), credit_to=["antoine", "baptiste"], debt_from=None
+        amount=Money(10), add_to=["antoine", "baptiste"], deduce_from=None
     )
     assert (
         operation.description
@@ -246,7 +246,7 @@ def test__operations__ChangeBalances__all_to_two(ledger_state):
 
 
 def test__operations__ChangeBalances__all_to_all(ledger_state):
-    operation = ChangeBalances(amount=Money(10), credit_to=None, debt_from=None)
+    operation = ChangeBalances(amount=Money(10), add_to=None, deduce_from=None)
     assert operation.description == "(10.00) owed by (All), credited to (All)"
     assert operation.changes(ledger_state) == {
         "antoine": Money("0"),
@@ -331,7 +331,7 @@ def test__operation__RequestContribution__no_pot(ledger_state):
 
 def test__operation__PaysContribution(ledger_state_with_pot):
     operation = PaysContribution(amount=Money(100), by="antoine")
-    assert operation.description == "Pays contribution of 100.00"
+    assert operation.description == "antoine contribute 100.00 to the pot"
     assert operation.changes(ledger_state_with_pot) == {
         "antoine": Money("+100.00"),
         "POT": Money("-100.00"),
@@ -412,9 +412,7 @@ def test__Ledger__add_pot(ledger):
 
 def test__Ledger__change_balance(ledger):
     ledger.apply(
-        ChangeBalances(
-            credit_to=None, debt_from=["antoine", "renan"], amount=Money(100)
-        )
+        ChangeBalances(add_to=None, deduce_from=["antoine", "renan"], amount=Money(100))
     )
     assert ledger.state == {
         "antoine": Money("-16.66"),
@@ -454,7 +452,7 @@ def ledger_with_operations(ledger):
     for operation in [
         AddAccount("kriti"),
         ChangeBalances(
-            amount=Money(50), credit_to=["antoine"], debt_from=["renan", "baptiste"]
+            amount=Money(50), add_to=["antoine"], deduce_from=["renan", "baptiste"]
         ),
         SharedExpense(by="baptiste", amount=Money(40), subject="buy lots of coffee"),
         Transfer(by="antoine", to="baptiste", amount=Money(12)),
@@ -482,9 +480,9 @@ def test__Ledger__save_to_file(ledger_with_operations, tmp_ledger_file):
             ---
             operation: Change Balances
             amount: 50.0
-            credit_to:
+            add_to:
             - antoine
-            debt_from:
+            deduce_from:
             - renan
             - baptiste
             ---
