@@ -370,7 +370,7 @@ class Ledger:
 
     @classmethod
     def load_from_file(cls) -> Self:
-        logger.info(f"load operations from file: {cls.LEDGER_FILE}")
+        logger.debug(f"load operations from file: {cls.LEDGER_FILE}")
         operation_dicts = yaml.load_all(
             pathlib.Path(cls.LEDGER_FILE).read_text(), Loader=yaml.Loader
         )
