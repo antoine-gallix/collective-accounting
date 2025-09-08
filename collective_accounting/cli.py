@@ -45,6 +45,31 @@ def state():
 
 
 @main.command
+@click.option("--index", type=click.INT)
+def undo(index):
+    """Undo operation
+
+    By default undo last operation
+
+    INDEX: undo operation at given index
+    """
+    with Ledger.edit() as ledger:
+        if index is not None:
+            ledger.records.pop(index - 1)
+        else:
+            ledger.records.pop()
+
+
+# ------------------------ operations ------------------------
+
+
+@main.group
+def record():
+    """[Record operations]"""
+    pass
+
+
+@record.command
 @click.argument("name", type=click.STRING)
 def add_user(name):
     """Adds a user to the ledger"""
@@ -55,7 +80,7 @@ def add_user(name):
         logger.error(error)
 
 
-@main.command
+@record.command
 def add_pot():
     """Setup shared pot for ledger"""
     try:
@@ -65,7 +90,7 @@ def add_pot():
         logger.error(error)
 
 
-@main.command
+@record.command("expense")
 @click.argument("amount", type=click.FLOAT)
 @click.argument("name", type=click.STRING)
 @click.argument("subject", type=click.STRING)
@@ -82,33 +107,7 @@ def record_shared_expense(amount, name, subject):
         ledger.record_shared_expense(amount, name, subject)
 
 
-@main.command
-@click.argument("amount", type=click.FLOAT)
-@click.argument("name", type=click.STRING)
-def reimburse(amount, name):
-    """Record money reimbursed from the pot to a user"""
-    with Ledger.edit() as ledger:
-        ledger.reimburse(amount, name)
-
-
-@main.command
-@click.argument("amount", type=click.FLOAT)
-def request_contribution(amount):
-    """Request contribution from all account for the pot"""
-    with Ledger.edit() as ledger:
-        ledger.request_contribution(amount)
-
-
-@main.command
-@click.argument("amount", type=click.FLOAT)
-@click.argument("name", type=click.STRING)
-def pays_contribution(amount, name):
-    """Record user sending money to the pot"""
-    with Ledger.edit() as ledger:
-        ledger.pays_contribution(amount, name)
-
-
-@main.command
+@record.command("transfer")
 @click.argument("amount", type=click.FLOAT)
 @click.argument("by", type=click.STRING)
 @click.argument("to", type=click.STRING)
@@ -125,17 +124,30 @@ def record_transfer(amount, by, to):
         ledger.record_transfer(amount=amount, by=by, to=to)
 
 
-@main.command
-@click.option("--index", type=click.INT)
-def undo(index):
-    """Undo operation
+# ------------------------ pot operations ------------------------
 
-    By default undo last operation
 
-    INDEX: undo operation at given index
-    """
+@record.command("request-contribution")
+@click.argument("amount", type=click.FLOAT)
+def record_request_contribution(amount):
+    """Request contribution from all account for the pot"""
     with Ledger.edit() as ledger:
-        if index is not None:
-            ledger.records.pop(index - 1)
-        else:
-            ledger.records.pop()
+        ledger.request_contribution(amount)
+
+
+@record.command("contribution")
+@click.argument("amount", type=click.FLOAT)
+@click.argument("name", type=click.STRING)
+def record_contribution(amount, name):
+    """Record user sending money to the pot"""
+    with Ledger.edit() as ledger:
+        ledger.pays_contribution(amount, name)
+
+
+@record.command
+@click.argument("amount", type=click.FLOAT)
+@click.argument("name", type=click.STRING)
+def reimburse(amount, name):
+    """Record money reimbursed from the pot to a user"""
+    with Ledger.edit() as ledger:
+        ledger.reimburse(amount, name)
