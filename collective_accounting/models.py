@@ -155,23 +155,23 @@ class ChangeBalances(Operation):
 
     TYPE: ClassVar[str] = "Change Balances"
     amount: Money
-    credit_to: Collection[Name] | None
-    debt_from: Collection[Name] | None
+    add_to: Collection[Name] | None
+    deduce_from: Collection[Name] | None
 
     @property
     def description(self):
-        return f"({self.amount}) owed by ({'All' if self.debt_from is None else ', '.join(self.debt_from)}), credited to ({'All' if self.credit_to is None else ', '.join(self.credit_to)})"
+        return f"({self.amount}) owed by ({'All' if self.deduce_from is None else ', '.join(self.deduce_from)}), credited to ({'All' if self.add_to is None else ', '.join(self.add_to)})"
 
     def changes(self, accounts: LedgerState) -> ChangeSet:  # type:ignore
         creditors = (
             funcy.lremove("POT", accounts.keys())
-            if self.credit_to is None
-            else self.credit_to
+            if self.add_to is None
+            else self.add_to
         )
         debitors = (
             funcy.lremove("POT", accounts.keys())
-            if self.debt_from is None
-            else self.debt_from
+            if self.deduce_from is None
+            else self.deduce_from
         )
         changes = DefaultDict(lambda: Money("0"))  # type:ignore
         for creditor, balance_change in zip(
@@ -199,11 +199,11 @@ class SharedExpense(Operation):
     def changes(self, state: LedgerState):
         if state.has_pot:
             return ChangeBalances(
-                credit_to=[self.by], debt_from=["POT"], amount=self.amount
+                add_to=[self.by], deduce_from=["POT"], amount=self.amount
             ).changes(state)
         else:
             return ChangeBalances(
-                credit_to=[self.by], debt_from=None, amount=self.amount
+                add_to=[self.by], deduce_from=None, amount=self.amount
             ).changes(state)
 
 
@@ -220,7 +220,7 @@ class Transfer(Operation):
 
     def changes(self, state: LedgerState):
         return ChangeBalances(
-            credit_to=[self.by], debt_from=[self.to], amount=self.amount
+            add_to=[self.by], deduce_from=[self.to], amount=self.amount
         ).changes(state)
 
 
@@ -252,7 +252,7 @@ class Reimburse(Operation):
         if not state.has_pot:
             raise RuntimeError("Reimburse only applies to a ledger with a pot")
         return ChangeBalances(
-            amount=self.amount, credit_to=[self.to], debt_from=["POT"]
+            amount=self.amount, add_to=[self.to], deduce_from=["POT"]
         ).changes(state)
 
 
@@ -271,7 +271,7 @@ class RequestContribution(Operation):
                 "RequestContribution only applies to a ledger with a pot"
             )
         return ChangeBalances(
-            amount=self.amount * (len(state) - 1), credit_to=["POT"], debt_from=None
+            amount=self.amount * (len(state) - 1), add_to=["POT"], deduce_from=None
         ).changes(state)
 
 
