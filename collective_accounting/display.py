@@ -25,17 +25,17 @@ def format_timestamp(timestamp) -> str:
     return arrow.get(timestamp).to("local").format("YYYY-MM-DD HH:mm:ss")
 
 
-def make_file_info_view(ledger) -> Table:
-    table = Table.grid(padding=(0, 5))
-    table.add_row("file", str(Ledger.LEDGER_FILE))
-    table.add_row(
-        "creation", format_timestamp(file_creation_timestamp(Ledger.LEDGER_FILE))
+def make_file_info_view(ledger):
+    file_path = Ledger.LEDGER_FILE
+    return Columns(
+        (
+            Text(f"file:{file_path}"),
+            Text(f"creation:{format_timestamp(file_creation_timestamp(file_path))}"),
+            Text(
+                f"last update:{format_timestamp(file_modification_timestamp(file_path))}"
+            ),
+        )
     )
-    table.add_row(
-        "last update",
-        format_timestamp(file_modification_timestamp(Ledger.LEDGER_FILE)),
-    )
-    return table
 
 
 def format_balance(balance) -> Text:
@@ -52,7 +52,7 @@ def make_balance_chip(ledger, name):
     return Text(name) + ":" + format_balance(ledger.state[name])
 
 
-def make_balance_view(ledger):
+def make_state_view(ledger):
     if ledger.state.has_pot:
         layout = Layout()
         layout.split_column(
@@ -128,23 +128,25 @@ def build_ledger_view():
         return Text("no ledger file", style="red")
 
     screen = Layout()
-    screen.split_row(
-        Layout(name="left", ratio=2),
+    screen.split_column(
+        Layout(name="main"),
         Layout(
-            name="right",
-            ratio=3,
+            name="footer",
+            size=1,
         ),
     )
-    screen.get("left").split_column(  # type:ignore
+    screen.get("main").split_row(  # type:ignore
         Layout(
-            name="left_top",
-            size=5,
+            name="left",
         ),
         Layout(
-            name="left_bottom",
+            name="right",
         ),
     )
 
+    screen.get("left").update(  # type:ignore
+        CenteredPanel(make_state_view(ledger), title="Account balances")
+    )
     screen.get("right").update(  # type:ignore
         CenteredPanel(
             make_operation_view(ledger),
@@ -153,10 +155,7 @@ def build_ledger_view():
             panel_options={"padding": (1, 0)},
         )
     )
-    screen.get("left_top").update(  # type:ignore
-        CenteredPanel(make_file_info_view(ledger), title="file")
-    )
-    screen.get("left_bottom").update(  # type:ignore
-        CenteredPanel(make_balance_view(ledger), title="balances")
+    screen.get("footer").update(  # type:ignore
+        make_file_info_view(ledger)
     )
     return screen

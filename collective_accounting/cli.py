@@ -5,7 +5,7 @@ import click
 from rich import print
 from rich.live import Live
 
-from .display import build_ledger_view, make_balance_view
+from .display import build_ledger_view, make_state_view
 from .logging import logger
 from .models import Ledger
 from .utils import file_modification_timestamp
@@ -41,7 +41,7 @@ def watch():
 @main.command
 def state():
     """Print the state of the accounts"""
-    print(make_balance_view(Ledger.load_from_file()))
+    print(make_state_view(Ledger.load_from_file()))
 
 
 @main.command
