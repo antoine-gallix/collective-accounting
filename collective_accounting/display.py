@@ -2,6 +2,7 @@ import arrow
 import funcy
 from rich.align import Align
 from rich.columns import Columns
+from rich.console import Group
 from rich.layout import Layout
 from rich.panel import Panel
 from rich.table import Table
@@ -54,16 +55,14 @@ def make_balance_chip(ledger, name):
 
 def make_state_view(ledger):
     if ledger.state.has_pot:
-        layout = Layout()
-        layout.split_column(
-            Layout(Columns([make_balance_chip(ledger, "POT")]), size=3),
+        return Group(
+            Columns([make_balance_chip(ledger, "POT")]),
             Columns(
                 make_balance_chip(ledger, name)
                 for name in ledger.state
                 if name != "POT"
             ),
         )
-        return layout
     else:
         return Columns(make_balance_chip(ledger, name) for name in ledger.state)
 
