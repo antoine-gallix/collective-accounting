@@ -235,7 +235,7 @@ class AddPot(Operation):
         if state.has_pot:
             raise RuntimeError("Ledger already has a pot")
         else:
-            return {"POT": "Create"}
+            return {"POT": "Create", "POT_ACCOUNT": "Create"}
 
 
 @dataclass
@@ -252,8 +252,8 @@ class Reimburse(Operation):
         if not state.has_pot:
             raise RuntimeError("Reimburse only applies to a ledger with a pot")
         return ChangeBalances(
-            amount=self.amount, add_to=[self.to], deduce_from=["POT"]
-        ).changes(state)
+            amount=self.amount, add_to=["POT"], deduce_from=[self.to]
+        ).changes(state) | {"POT_ACCOUNT": -self.amount}  # type:ignore
 
 
 @dataclass
@@ -288,7 +288,9 @@ class PaysContribution(Operation):
     def changes(self, state: LedgerState):
         if not state.has_pot:
             raise RuntimeError("PaysContribution only applies to a ledger with a pot")
-        return Transfer(amount=self.amount, by=self.by, to="POT").changes(state)
+        return Transfer(amount=self.amount, by=self.by, to="POT").changes(state) | {
+            "POT_ACCOUNT": self.amount
+        }  # type:ignore
 
 
 OPERATION_NAME_TO_CLASS = {
@@ -391,11 +393,31 @@ class Ledger:
 
     # ------------------------ record ------------------------
 
+    def update_pot_account(self, change):
+        match change:
+            case "Create":
+                if hasattr(self, "pot"):
+                    raise RuntimeError("pot account already exist")
+                logger.debug("create pot account")
+                self.pot = Money(0)
+            case Money():
+                if not hasattr(self, "pot"):
+                    raise RuntimeError("pot account does not exist")
+                new_account_value = self.pot + change
+                logger.debug(f"apply change to pot account: {change}")
+                if new_account_value < 0:
+                    raise RuntimeError("pot account has insufficient funds")
+                self.pot = new_account_value
+            case _:
+                pass
+
     def apply(self, operation):
         logger.debug(f"apply operation: {operation}")
         try:
             changes = operation.changes(self.state)
+            pot_account_changes = changes.pop("POT_ACCOUNT", None)
             new_state = self.state.apply_changeset(changes)
+            self.update_pot_account(pot_account_changes)
         except:
             logger.error("operation could not been applied")
             raise

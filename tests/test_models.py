@@ -298,11 +298,11 @@ def test__operation__CreatePot__reserved_name(ledger_state):
 
 
 def test__operation__Reimburse(ledger_state_with_pot):
-    operation = Reimburse(Money(50), "Antoine")
+    operation = Reimburse(Money(50), "antoine")
     assert operation.description == "Reimburse 50.00 to Antoine from the pot"
     assert operation.changes(ledger_state_with_pot) == {
-        "Antoine": Money("50.00"),
-        "POT": Money("-50.00"),
+        "antoine": Money("-50.00"),
+        "POT": Money("+50.00"),
     }
 
 
@@ -411,6 +411,7 @@ def test__Ledger__remove_account__error(ledger):
 def test__Ledger__add_pot(ledger):
     ledger.apply(AddPot())
     assert list(ledger.state.keys()) == ["antoine", "baptiste", "renan", "POT"]
+    assert ledger.state["POT"] == Money(0)
     assert ledger.pot == Money(0)
 
 
@@ -459,11 +460,11 @@ def test__Ledger_w_pot__contribution(ledger_with_pot):
 
 def test__Ledger_w_pot__reimburse(ledger_with_pot):
     ledger_with_pot.state["POT"] = Money(-100)
-    ledger_with_pot.state["Antoine"] = Money(100)
+    ledger_with_pot.state["antoine"] = Money(100)
     ledger_with_pot.pot = 300
     ledger_with_pot.apply(Reimburse(Money(100), "antoine"))
     assert ledger_with_pot.state["POT"] == Money(0)
-    assert ledger_with_pot.state["Antoine"] == Money(0)
+    assert ledger_with_pot.state["antoine"] == Money(0)
     assert ledger_with_pot.pot == 200
 
 
