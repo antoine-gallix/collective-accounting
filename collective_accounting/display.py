@@ -5,6 +5,7 @@ from rich.columns import Columns
 from rich.console import Group
 from rich.layout import Layout
 from rich.panel import Panel
+from rich.rule import Rule
 from rich.table import Table
 from rich.text import Text
 
@@ -58,20 +59,30 @@ def make_pot_account_display(ledger):
     return f"Pot Account:{ledger.pot}"
 
 
+def make_user_account_display(ledger): ...
+
+
 def make_state_view(ledger):
     if ledger.state.has_pot:
         return Group(
             Columns(
-                [make_balance_display(ledger, "POT"), make_pot_account_display(ledger)]
+                [make_balance_display(ledger, "POT"), make_pot_account_display(ledger)],
+                expand=True,
             ),
+            Rule(),
             Columns(
-                make_balance_display(ledger, name)
-                for name in ledger.state
-                if name != "POT"
+                (
+                    make_balance_display(ledger, name)
+                    for name in ledger.state
+                    if name != "POT"
+                ),
+                expand=True,
             ),
         )
     else:
-        return Columns(make_balance_display(ledger, name) for name in ledger.state)
+        return Columns(
+            (make_balance_display(ledger, name) for name in ledger.state), expand=True
+        )
 
 
 def make_operation_view(ledger) -> Table:
