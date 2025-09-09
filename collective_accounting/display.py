@@ -35,7 +35,8 @@ def make_file_info_view(ledger):
             Text(
                 f"last update:{format_timestamp(file_modification_timestamp(file_path))}"
             ),
-        )
+        ),
+        expand=True,
     )
 
 
@@ -141,12 +142,8 @@ def build_ledger_view():
         ),
     )
     screen.get("main").split_row(  # type:ignore
-        Layout(
-            name="left",
-        ),
-        Layout(
-            name="right",
-        ),
+        Layout(name="left", ratio=2),
+        Layout(name="right", ratio=3),
     )
 
     screen.get("left").update(  # type:ignore
