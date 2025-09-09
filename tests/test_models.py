@@ -356,6 +356,12 @@ def ledger():
     return ledger
 
 
+@fixture
+def ledger_with_pot(ledger):
+    ledger.apply(AddPot())
+    return ledger
+
+
 # --------
 
 
@@ -405,6 +411,7 @@ def test__Ledger__remove_account__error(ledger):
 def test__Ledger__add_pot(ledger):
     ledger.apply(AddPot())
     assert list(ledger.state.keys()) == ["antoine", "baptiste", "renan", "POT"]
+    assert ledger.pot == Money(0)
 
 
 # -------- balance operations
@@ -437,6 +444,27 @@ def test__Ledger__transfer(ledger):
         "baptiste": Money("0"),
         "renan": Money("-50"),
     }
+
+
+def test__Ledger_w_pot__contribution(ledger_with_pot):
+    assert ledger_with_pot.state["POT"] == 0
+    assert ledger_with_pot.pot == 0
+    ledger_with_pot.apply(RequestContribution(Money(100)))
+    assert ledger_with_pot.state["POT"] == 300
+    assert ledger_with_pot.pot == 0
+    ledger_with_pot.apply(PaysContribution(Money(100), "baptiste"))
+    assert ledger_with_pot.state["POT"] == 200
+    assert ledger_with_pot.pot == 100
+
+
+def test__Ledger_w_pot__reimburse(ledger_with_pot):
+    ledger_with_pot.state["POT"] = Money(-100)
+    ledger_with_pot.state["Antoine"] = Money(100)
+    ledger_with_pot.pot = 300
+    ledger_with_pot.apply(Reimburse(Money(100), "antoine"))
+    assert ledger_with_pot.state["POT"] == Money(0)
+    assert ledger_with_pot.state["Antoine"] == Money(0)
+    assert ledger_with_pot.pot == 200
 
 
 # ------------------------ IOs ------------------------
