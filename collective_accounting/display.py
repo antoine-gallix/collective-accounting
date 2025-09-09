@@ -53,10 +53,16 @@ def make_balance_display(ledger, name):
     return Text(name) + ":" + format_balance(ledger.state[name])
 
 
+def make_pot_account_display(ledger):
+    return f"Pot Account:{ledger.pot}"
+
+
 def make_state_view(ledger):
     if ledger.state.has_pot:
         return Group(
-            Columns([make_balance_display(ledger, "POT")]),
+            Columns(
+                [make_balance_display(ledger, "POT"), make_pot_account_display(ledger)]
+            ),
             Columns(
                 make_balance_display(ledger, name)
                 for name in ledger.state
