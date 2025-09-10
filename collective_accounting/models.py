@@ -224,6 +224,23 @@ class Transfer(Operation):
         ).changes(state)
 
 
+@dataclass
+class TransferDebt(Operation):
+    TYPE: ClassVar[str] = "Debt Transfer"
+    amount: Money
+    origin: Name
+    to: Name
+
+    @property
+    def description(self):
+        return f"{self.to} covers {self.amount} of debt from {self.origin}"
+
+    def changes(self, state: LedgerState):
+        return ChangeBalances(
+            add_to=[self.origin], deduce_from=[self.to], amount=self.amount
+        ).changes(state)
+
+
 class AddPot(Operation):
     TYPE: ClassVar[str] = "Add Pot"
 
@@ -305,6 +322,7 @@ OPERATION_NAME_TO_CLASS = {
         Reimburse,
         RequestContribution,
         PaysContribution,
+        TransferDebt,
     ]
 }
 
@@ -443,8 +461,14 @@ class Ledger:
     def record_transfer(self, amount, by, to):
         self._record_operation(Transfer(Money(amount), by, to))
 
+    def record_transfer_debt(self, amount, origin, to):
+        self._record_operation(TransferDebt(Money(amount), origin=origin, to=to))
+
     def request_contribution(self, amount):
         self._record_operation(RequestContribution(Money(amount)))
 
     def pays_contribution(self, amount, by):
         self._record_operation(PaysContribution(Money(amount), by))
+
+    def reimburse(self, amount, to):
+        self._record_operation(Reimburse(Money(amount), to))

@@ -16,6 +16,7 @@ from collective_accounting.models import (
     RequestContribution,
     SharedExpense,
     Transfer,
+    TransferDebt,
 )
 
 # ------------------------ fixtures ------------------------
@@ -279,6 +280,15 @@ def test__operations__Transfer(ledger_state):
     assert operation.description == "baptiste has sent 100.00 to antoine"
     assert operation.changes(ledger_state) == {
         "antoine": Money("-100"),
+        "baptiste": Money("100"),
+    }
+
+
+def test__operations__TransferDebt(ledger_state):
+    operation = TransferDebt(amount=Money(100), origin="baptiste", to="renan")
+    assert operation.description == "renan covers 100.00 of debt from baptiste"
+    assert operation.changes(ledger_state) == {
+        "renan": Money("-100"),
         "baptiste": Money("100"),
     }
 

@@ -124,6 +124,16 @@ def record_transfer(amount, by, to):
         ledger.record_transfer(amount=amount, by=by, to=to)
 
 
+@record.command("transfer-debt")
+@click.argument("amount", type=click.FLOAT)
+@click.argument("origin", type=click.STRING)
+@click.argument("to", type=click.STRING)
+def record_transfer_debt(amount, origin, to):
+    """Record debt transfered from a user to another"""
+    with Ledger.edit() as ledger:
+        ledger.record_transfer_debt(amount=amount, origin=origin, to=to)
+
+
 # ------------------------ pot operations ------------------------
 
 
