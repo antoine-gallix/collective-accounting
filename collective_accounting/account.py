@@ -23,3 +23,12 @@ class Account:
     def change_balance(self, amount: Money):
         self.balance += amount
         self.diff -= amount
+
+
+class PositiveAccount(Account):
+    """An account whose balance cannot get negative"""
+
+    def change_balance(self, amount: Money):
+        if -amount > self.balance:
+            raise RuntimeError("account balance cannot be negative")
+        super().change_balance(amount)

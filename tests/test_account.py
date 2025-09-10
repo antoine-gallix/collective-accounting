@@ -1,6 +1,6 @@
-from pytest import fixture
+from pytest import fixture, raises
 
-from collective_accounting.account import Account
+from collective_accounting.account import Account, PositiveAccount
 from collective_accounting.money import Money
 
 
@@ -38,3 +38,10 @@ def test__Account__is_settled(account):
     assert not account.is_settled
     account.change_balance(Money(20))
     assert account.is_settled
+
+
+def test__PositiveAccount():
+    account = PositiveAccount()
+    with raises(RuntimeError):
+        account.change_balance(Money(-10))
+    assert account == PositiveAccount(balance=Money(0), diff=Money(0))
