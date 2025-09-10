@@ -134,7 +134,10 @@ def test__operations__AddPot(ledger_state):
     operation = AddPot()
     assert operation.TYPE == "Add Pot"
     assert operation.description == "Add a common pot to the group"
-    assert operation.changes(ledger_state) == {"POT": "Create"}
+    assert operation.changes(ledger_state) == {
+        "POT": "Create",
+        "POT_ACCOUNT": "Create",
+    }
 
 
 def test__operations__ChangeBalances__one_to_one(ledger_state):
@@ -298,6 +301,7 @@ def test__operation__CreatePot(ledger_state):
     assert operation.description == "Add a common pot to the group"
     assert operation.changes(ledger_state) == {
         "POT": "Create",
+        "POT_ACCOUNT": "Create",
     }
 
 
@@ -309,9 +313,10 @@ def test__operation__CreatePot__reserved_name(ledger_state):
 
 def test__operation__Reimburse(ledger_state_with_pot):
     operation = Reimburse(Money(50), "antoine")
-    assert operation.description == "Reimburse 50.00 to Antoine from the pot"
+    assert operation.description == "Reimburse 50.00 to antoine from the pot"
     assert operation.changes(ledger_state_with_pot) == {
         "antoine": Money("-50.00"),
+        "POT_ACCOUNT": Money("-50.00"),
         "POT": Money("+50.00"),
     }
 
@@ -344,6 +349,7 @@ def test__operation__PaysContribution(ledger_state_with_pot):
     assert operation.description == "antoine contribute 100.00 to the pot"
     assert operation.changes(ledger_state_with_pot) == {
         "antoine": Money("+100.00"),
+        "POT_ACCOUNT": Money("100.00"),
         "POT": Money("-100.00"),
     }
 

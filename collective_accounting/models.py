@@ -17,7 +17,7 @@ import funcy
 import yaml
 
 from .logging import logger
-from .utils import Money
+from .money import Money
 
 type Name = str
 type AccountAction = Literal["Create"] | Literal["Remove"]
