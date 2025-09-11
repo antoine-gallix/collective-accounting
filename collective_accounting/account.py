@@ -1,4 +1,7 @@
 from dataclasses import dataclass
+from typing import Collection
+
+import funcy
 
 from .logging import logger
 from .money import Money
@@ -34,7 +37,10 @@ class PositiveAccount(Account):
         super().change_balance(amount)
 
 
-class LedgerState(dict[str, Account]):
+type Name = str
+
+
+class LedgerState(dict[Name, Account]):
     """A collection of accounts with a balance. Represents the state of a ledger at a given point in time.
 
     Operations on a ledger state are:
@@ -87,3 +93,31 @@ class LedgerState(dict[str, Account]):
     def check_equilibrium(self):
         if (error := sum(account.diff for account in self.values())) != 0:
             raise RuntimeError(f"accounts not equilibrated. Sum of diffs is {error:+}")
+
+    def create_debt(
+        self,
+        amount: Money,
+        creditors: Collection[Name] | None,
+        debitors: Collection[Name] | None,
+    ):
+        """Generic Balance Change Operation
+
+        Represents the transfer of credit from one group of accounts to another group of accounts. The amount of the change is divided between the creditors, and added to their balance; between the debitors, it is divided and substracted from their balance.
+
+        Specifying None for either group is interpreted as `all accounts`
+
+        More precisely:
+            individual_creditor_balance_change = amount / len(add_to)
+            individual_debitor_balance_change = - amount / len(substract_from)"""
+        creditors = (
+            funcy.lremove("POT", self.keys()) if creditors is None else creditors
+        )
+        debitors = funcy.lremove("POT", self.keys()) if debitors is None else debitors
+        for creditor, balance_change in zip(
+            creditors, amount.divide_with_no_rest(len(creditors))
+        ):
+            self[creditor].diff += balance_change  # type:ignore
+        for debitor, balance_change in zip(
+            debitors, amount.divide_with_no_rest(len(debitors))
+        ):
+            self[debitor].diff -= balance_change  # type:ignore

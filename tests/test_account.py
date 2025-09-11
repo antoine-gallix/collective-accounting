@@ -156,7 +156,7 @@ def test__LedgerState__change_diff__name_do_not_exist(ledger_state):
 # --------
 
 
-def test__LedgerState__check_equilibriumbb(ledger_state):
+def test__LedgerState__check_equilibrium(ledger_state):
     ledger_state.check_equilibrium()
     ledger_state.change_diff("antoine", Money(10))
     with raises(RuntimeError):
@@ -164,3 +164,101 @@ def test__LedgerState__check_equilibriumbb(ledger_state):
     ledger_state.change_diff("renan", Money(-5))
     ledger_state.change_diff("baptiste", Money(-5))
     ledger_state.check_equilibrium()
+
+
+# --------
+
+
+def test__operations__ChangeBalances__one_to_one(ledger_state):
+    ledger_state.create_debt(
+        amount=Money(10), creditors=["antoine"], debitors=["baptiste"]
+    )
+    assert ledger_state == {
+        "antoine": Account(balance=Money("0.00"), diff=Money("10.00")),
+        "baptiste": Account(balance=Money("0.00"), diff=Money("-10.00")),
+        "renan": Account(balance=Money("0.00"), diff=Money("0.00")),
+    }
+
+
+def test__operations__ChangeBalances__one_to_two(ledger_state):
+    ledger_state.create_debt(
+        amount=Money(10), creditors=["antoine", "renan"], debitors=["baptiste"]
+    )
+    assert ledger_state == {
+        "antoine": Account(balance=Money("0.00"), diff=Money("5.00")),
+        "baptiste": Account(balance=Money("0.00"), diff=Money("-10.00")),
+        "renan": Account(balance=Money("0.00"), diff=Money("5.00")),
+    }
+
+
+def test__operations__ChangeBalances__one_to_all(ledger_state):
+    ledger_state.create_debt(amount=Money(10), creditors=None, debitors=["baptiste"])
+    assert ledger_state == {
+        "antoine": Account(balance=Money("0.00"), diff=Money("3.34")),
+        "baptiste": Account(balance=Money("0.00"), diff=Money("-6.67")),
+        "renan": Account(balance=Money("0.00"), diff=Money("3.33")),
+    }
+
+
+def test__operations__ChangeBalances__two_to_one(ledger_state):
+    ledger_state.create_debt(
+        amount=Money(10), creditors=["renan"], debitors=["baptiste", "antoine"]
+    )
+    assert ledger_state == {
+        "antoine": Account(balance=Money("0.00"), diff=Money("-5.00")),
+        "baptiste": Account(balance=Money("0.00"), diff=Money("-5.00")),
+        "renan": Account(balance=Money("0.00"), diff=Money("10.00")),
+    }
+
+
+def test__operations__ChangeBalances__two_to_two(ledger_state):
+    ledger_state.create_debt(
+        amount=Money(10),
+        creditors=["renan", "baptiste"],
+        debitors=["baptiste", "antoine"],
+    )
+    assert ledger_state == {
+        "antoine": Account(balance=Money("0.00"), diff=Money("-5.00")),
+        "baptiste": Account(balance=Money("0.00"), diff=Money("0.00")),
+        "renan": Account(balance=Money("0.00"), diff=Money("5.00")),
+    }
+
+
+def test__operations__ChangeBalances__two_to_all(ledger_state):
+    ledger_state.create_debt(
+        amount=Money(10), creditors=None, debitors=["baptiste", "antoine"]
+    )
+    assert ledger_state == {
+        "antoine": Account(balance=Money("0.00"), diff=Money("-1.66")),
+        "baptiste": Account(balance=Money("0.00"), diff=Money("-1.67")),
+        "renan": Account(balance=Money("0.00"), diff=Money("3.33")),
+    }
+
+
+def test__operations__ChangeBalances__all_to_one(ledger_state):
+    ledger_state.create_debt(amount=Money(10), creditors=["antoine"], debitors=None)
+    assert ledger_state == {
+        "antoine": Account(balance=Money("0.00"), diff=Money("6.66")),
+        "baptiste": Account(balance=Money("0.00"), diff=Money("-3.33")),
+        "renan": Account(balance=Money("0.00"), diff=Money("-3.33")),
+    }
+
+
+def test__operations__ChangeBalances__all_to_two(ledger_state):
+    ledger_state.create_debt(
+        amount=Money(10), creditors=["antoine", "baptiste"], debitors=None
+    )
+    assert ledger_state == {
+        "antoine": Account(balance=Money("0.00"), diff=Money("1.66")),
+        "baptiste": Account(balance=Money("0.00"), diff=Money("1.67")),
+        "renan": Account(balance=Money("0.00"), diff=Money("-3.33")),
+    }
+
+
+def test__operations__ChangeBalances__all_to_all(ledger_state):
+    ledger_state.create_debt(amount=Money(10), creditors=None, debitors=None)
+    assert ledger_state == {
+        "antoine": Account(balance=Money("0.00"), diff=Money("0.00")),
+        "baptiste": Account(balance=Money("0.00"), diff=Money("0.00")),
+        "renan": Account(balance=Money("0.00"), diff=Money("0.00")),
+    }
