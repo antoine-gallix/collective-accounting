@@ -73,18 +73,21 @@ class AddPot(Operation):
 @dataclass
 class SharedExpense(Operation):
     amount: Money
-    by: Name
+    payer: Name
     subject: str
 
     @property
     def description(self):
-        return f"{self.by} has paid {self.amount} for {self.subject}"
+        return f"{self.payer} has paid {self.amount} for {self.subject}"
 
     def apply_to(self, state: LedgerState):
+        state.change_balance(self.payer, amount=-self.amount)
         if state.has_pot:
-            state.create_debt(amount=self.amount, creditors=[self.by], debitors=["POT"])
+            state.create_debt(
+                amount=self.amount, creditors=[self.payer], debitors=["POT"]
+            )
         else:
-            state.create_debt(amount=self.amount, creditors=[self.by], debitors=None)
+            state.create_debt(amount=self.amount, creditors=[self.payer], debitors=None)
 
 
 @dataclass
@@ -136,8 +139,9 @@ class Transfer(Operation):
         return f"{self.sender} has sent {self.amount} to {self.receiver}"
 
     def apply_to(self, state: LedgerState):
-        state.change_balance(name=self.sender, amount=-self.amount)
-        state.change_balance(name=self.receiver, amount=self.amount)
+        state.internal_transfer(
+            amount=self.amount, sender=self.sender, receiver=self.receiver
+        )
 
 
 @dataclass
@@ -152,8 +156,9 @@ class Reimburse(Operation):
     def apply_to(self, state: LedgerState):
         if not state.has_pot:
             raise RuntimeError("Reimburse only applies to a ledger with a pot")
-        state.change_balance(name="POT", amount=-self.amount)
-        state.change_balance(name=self.receiver, amount=self.amount)
+        state.internal_transfer(
+            amount=self.amount, sender="POT", receiver=self.receiver
+        )
 
 
 @dataclass
@@ -168,5 +173,4 @@ class PaysContribution(Operation):
     def apply_to(self, state: LedgerState):
         if not state.has_pot:
             raise RuntimeError("PaysContribution only applies to a ledger with a pot")
-        state.change_balance(name=self.sender, amount=-self.amount)
-        state.change_balance(name="POT", amount=self.amount)
+        state.internal_transfer(amount=self.amount, sender=self.sender, receiver="POT")

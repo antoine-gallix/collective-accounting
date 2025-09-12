@@ -20,12 +20,11 @@ class Account:
     def is_settled(self):
         return self.diff == Money(0)
 
-    def expect(self, amount: Money):
+    def change_diff(self, amount: Money):
         self.diff += amount
 
     def change_balance(self, amount: Money):
         self.balance += amount
-        self.diff -= amount
 
 
 class PositiveAccount(Account):
@@ -93,7 +92,7 @@ class LedgerState(dict[Name, Account]):
     def change_diff(self, name: str, amount: Money):
         logger.debug(f"difference change: {name} {amount!s}")
         try:
-            self[name].expect(amount)
+            self[name].change_diff(amount)
         except KeyError:
             raise RuntimeError("account does not exists")
 
@@ -123,8 +122,15 @@ class LedgerState(dict[Name, Account]):
         for creditor, balance_change in zip(
             creditors, amount.divide_with_no_rest(len(creditors))
         ):
-            self[creditor].diff += balance_change  # type:ignore
+            self.change_diff(creditor, balance_change)
         for debitor, balance_change in zip(
             debitors, amount.divide_with_no_rest(len(debitors))
         ):
-            self[debitor].diff -= balance_change  # type:ignore
+            self.change_diff(debitor, -balance_change)
+
+    def internal_transfer(self, amount: Money, sender: Name, receiver: Name):
+        logger.debug(f"transfering {amount} from {sender} to {receiver}")
+        self.change_balance(sender, -amount)
+        self.change_balance(receiver, amount)
+        self.change_diff(sender, amount)
+        self.change_diff(receiver, -amount)

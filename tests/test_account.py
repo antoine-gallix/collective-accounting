@@ -34,27 +34,27 @@ def test__Account__defaults():
 
 def test__Account__expect(account):
     # positive
-    account.expect(Money(10))
+    account.change_diff(Money(10))
     assert account == Account(balance=Money(0), diff=Money(10))
     # negative
-    account.expect(Money(-30))
+    account.change_diff(Money(-30))
     assert account == Account(balance=Money(0), diff=Money(-20))
 
 
 def test__Account__change_balance(account):
     # positive
     account.change_balance(Money(10))
-    assert account == Account(balance=Money(10), diff=Money(-10))
+    assert account == Account(balance=Money(10), diff=Money(0))
     # negative
     account.change_balance(Money(-40))
-    assert account == Account(balance=Money(-30), diff=Money(30))
+    assert account == Account(balance=Money(-30), diff=Money(0))
 
 
 def test__Account__is_settled(account):
     assert account.is_settled
-    account.expect(Money(20))
+    account.change_diff(Money(20))
     assert not account.is_settled
-    account.change_balance(Money(20))
+    account.change_diff(-Money(20))
     assert account.is_settled
 
 
@@ -114,7 +114,7 @@ def test__LedgerState__remove_account__not_exist(ledger_state):
 
 
 def test__LedgerState__remove_account__non_null_balance(ledger_state):
-    ledger_state.change_balance("antoine", 10)
+    ledger_state.change_diff("antoine", 10)
     with raises(RuntimeError):
         ledger_state.remove_account("antoine")
 
@@ -125,7 +125,7 @@ def test__LedgerState__remove_account__non_null_balance(ledger_state):
 def test__LedgerState__change_balance(ledger_state):
     ledger_state.change_balance("antoine", 10)
     assert ledger_state == {
-        "antoine": Account(balance=Money(10), diff=Money(-10)),
+        "antoine": Account(balance=Money(10), diff=Money(0)),
         "baptiste": Account(balance=Money(0), diff=Money(0)),
         "renan": Account(balance=Money(0), diff=Money(0)),
     }

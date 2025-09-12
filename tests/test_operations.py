@@ -80,22 +80,26 @@ def test__CreatePot__already_exist(state):
 
 
 def test__SharedExpense(state):
-    operation = SharedExpense(amount=Money(100), by="antoine", subject="renting a van")
+    operation = SharedExpense(
+        amount=Money(100), payer="antoine", subject="renting a van"
+    )
     assert operation.description == "antoine has paid 100.00 for renting a van"
     operation.apply_to(state)
     assert state == {
-        "antoine": Account(balance=Money("0.00"), diff=Money("66.66")),
+        "antoine": Account(balance=Money("-100.00"), diff=Money("66.66")),
         "baptiste": Account(balance=Money("0.00"), diff=Money("-33.33")),
         "renan": Account(balance=Money("0.00"), diff=Money("-33.33")),
     }
 
 
 def test__SharedExpense_with_pot(state_with_pot):
-    operation = SharedExpense(amount=Money(100), by="antoine", subject="renting a van")
+    operation = SharedExpense(
+        amount=Money(100), payer="antoine", subject="renting a van"
+    )
     assert operation.description == "antoine has paid 100.00 for renting a van"
     operation.apply_to(state_with_pot)
     assert state_with_pot == {
-        "antoine": Account(balance=Money("0.00"), diff=Money("100.00")),
+        "antoine": Account(balance=Money("-100.00"), diff=Money("100.00")),
         "POT": PositiveAccount(balance=Money("0.00"), diff=Money("-100.00")),
         "baptiste": Account(balance=Money("0.00"), diff=Money("0.00")),
         "renan": Account(balance=Money("0.00"), diff=Money("0.00")),
@@ -148,7 +152,7 @@ def test__Transfer(state):
 
 
 def test__operation__Reimburse(state_with_pot):
-    state_with_pot.change_balance("POT", 100)
+    state_with_pot.change_balance("POT", Money("100"))
     operation = Reimburse(Money(50), "antoine")
     assert operation.description == "Reimburse 50.00 to antoine from the pot"
     operation.apply_to(state_with_pot)
@@ -156,7 +160,7 @@ def test__operation__Reimburse(state_with_pot):
         "antoine": Account(balance=Money("50.00"), diff=Money("-50.00")),
         "baptiste": Account(balance=Money("0.00"), diff=Money("0.00")),
         "renan": Account(balance=Money("0.00"), diff=Money("0.00")),
-        "POT": PositiveAccount(balance=Money("50.00"), diff=Money("-50.00")),
+        "POT": PositiveAccount(balance=Money("50.00"), diff=Money("50.00")),
     }
 
 
