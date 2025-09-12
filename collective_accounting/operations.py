@@ -29,6 +29,9 @@ class Operation(ABC):
     def apply_to(self, state: LedgerState) -> None: ...
 
 
+# -------- account management
+
+
 @dataclass
 class AddAccount(Operation):
     name: Name
