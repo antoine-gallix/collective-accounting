@@ -1,12 +1,5 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import (
-    ClassVar,
-    Collection,
-    DefaultDict,
-)
-
-import funcy
 
 from .account import LedgerState, Name
 from .money import Money
