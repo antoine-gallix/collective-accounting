@@ -76,6 +76,13 @@ class LedgerState(dict[Name, Account]):
         except KeyError:
             raise RuntimeError("account does not exists")
 
+    def add_pot(self):
+        self["POT"] = PositiveAccount()
+
+    @property
+    def has_pot(self):
+        return "POT" in self
+
     def change_balance(self, name: str, amount: Money):
         logger.debug(f"balance change: {name} {amount!s}")
         try:
