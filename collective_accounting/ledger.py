@@ -1,9 +1,14 @@
+import pathlib
 from copy import copy
 from dataclasses import dataclass, field
+from typing import Self
 
 import funcy
+import yaml
+from decorator import contextmanager
 
 from .account import LedgerState
+from .io import load_operation_from_dict, operation_as_dict
 from .logging import logger
 from .money import Money
 from .operations import (
@@ -43,37 +48,35 @@ class Ledger:
 
     # ------------------------ IOs ------------------------
 
-    # def save_to_file(self):
-    #     operations_as_dicts = funcy.map(
-    #         operation_as_dict, funcy.pluck_attr("operation", self.records)
-    #     )
-    #     pathlib.Path(self.LEDGER_FILE).write_text(
-    #         yaml.dump_all(
-    #             operations_as_dicts,
-    #             sort_keys=False,
-    #         )
-    #     )
+    def save_to_file(self):
+        operations_as_dicts = funcy.map(operation_as_dict, self.operations)
+        pathlib.Path(self.LEDGER_FILE).write_text(
+            yaml.dump_all(
+                operations_as_dicts,
+                sort_keys=False,
+            )
+        )
 
-    # @classmethod
-    # def load_from_file(cls) -> Self:
-    #     logger.debug(f"load operations from file: {cls.LEDGER_FILE}")
-    #     operation_dicts = yaml.load_all(
-    #         pathlib.Path(cls.LEDGER_FILE).read_text(), Loader=yaml.Loader
-    #     )
-    #     operations = funcy.map(load_operation_from_dict, operation_dicts)
-    #     logger.debug("replay operations")
-    #     ledger = cls()
-    #     for operation in operations:
-    #         ledger.apply(operation)
-    #     logger.debug("ledger loaded")
-    #     return ledger
+    @classmethod
+    def load_from_file(cls) -> Self:
+        logger.debug(f"load operations from file: {cls.LEDGER_FILE}")
+        operation_dicts = yaml.load_all(
+            pathlib.Path(cls.LEDGER_FILE).read_text(), Loader=yaml.Loader
+        )
+        operations = funcy.map(load_operation_from_dict, operation_dicts)
+        logger.debug("replay operations")
+        ledger = cls()
+        for operation in operations:
+            ledger.record(operation)
+        logger.debug("ledger loaded")
+        return ledger
 
-    # @classmethod
-    # @contextmanager  # type: ignore
-    # def edit(cls) -> Self:  # type: ignore
-    #     ledger = cls.load_from_file()
-    #     yield ledger  # type: ignore
-    #     ledger.save_to_file()
+    @classmethod
+    @contextmanager  # type: ignore
+    def edit(cls) -> Self:  # type: ignore
+        ledger = cls.load_from_file()
+        yield ledger  # type: ignore
+        ledger.save_to_file()
 
     # ------------------------ record ------------------------
 

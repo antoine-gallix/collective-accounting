@@ -1,3 +1,6 @@
+import pathlib
+from textwrap import dedent
+
 from pytest import fixture
 
 from collective_accounting.account import Account, PositiveAccount
@@ -24,7 +27,7 @@ def ledger():
     return ledger
 
 
-# --------
+# -------- scenarios
 
 
 def test__Ledger__create():
@@ -128,3 +131,72 @@ def test__Ledger__scenario__pot(ledger):
         "renan": Account(balance=Money("-50.00"), diff=Money("0.00")),
         "POT": PositiveAccount(balance=Money("30.00"), diff=Money("-5.00")),
     }
+
+
+# -------- IO
+
+
+@fixture
+def tmp_ledger_file(mocker, tmp_path):
+    mocker.patch.object(Ledger, "LEDGER_FILE", tmp_path / Ledger.LEDGER_FILE)
+
+
+@fixture
+def ledger_with_operations(ledger):
+    ledger.add_pot()
+    ledger.request_contribution(50)
+    ledger.pays_contribution(50, "antoine")
+    ledger.pays_contribution(30, "baptiste")
+    ledger.pays_contribution(50, "renan")
+    ledger.record_shared_expense(amount=125, name="antoine", subject="potatoes")
+    ledger.reimburse(100, "antoine")
+    return ledger
+
+
+def test__Ledger__save_to_file(ledger_with_operations):
+    ledger_with_operations.save_to_file()
+    file_content = pathlib.Path(ledger_with_operations.LEDGER_FILE).read_text()
+    assert file_content == dedent(
+        """\
+        operation: AddAccount
+        name: antoine
+        ---
+        operation: AddAccount
+        name: baptiste
+        ---
+        operation: AddAccount
+        name: renan
+        ---
+        operation: AddPot
+        ---
+        operation: RequestContribution
+        amount: 50.0
+        ---
+        operation: PaysContribution
+        amount: 50.0
+        sender: antoine
+        ---
+        operation: PaysContribution
+        amount: 30.0
+        sender: baptiste
+        ---
+        operation: PaysContribution
+        amount: 50.0
+        sender: renan
+        ---
+        operation: SharedExpense
+        amount: 125.0
+        payer: antoine
+        subject: potatoes
+        ---
+        operation: Reimburse
+        amount: 100.0
+        receiver: antoine
+        """
+    )
+
+
+def test__Ledger__load_from_file(ledger_with_operations, tmp_ledger_file):
+    ledger_with_operations.save_to_file()
+    ledger_loaded = Ledger.load_from_file()
+    assert ledger_loaded.state == ledger_with_operations.state
