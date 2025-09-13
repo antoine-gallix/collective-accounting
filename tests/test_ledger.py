@@ -9,6 +9,7 @@ from collective_accounting.money import Money
 from collective_accounting.operations import (
     AddAccount,
     AddPot,
+    Debt,
     PaysContribution,
     Reimburse,
     RequestContribution,
@@ -60,6 +61,9 @@ def test__Ledger__scenario__shared_expense(ledger):
         receiver="antoine",
     )
     ledger.record_transfer_debt(40, "renan", "baptiste")
+    ledger.record_debt(
+        30, creditor="baptiste", debitor="renan", subject="lunch at baustelle"
+    )
     assert ledger.operations == [
         AddAccount(name="antoine"),
         AddAccount(name="baptiste"),
@@ -79,11 +83,17 @@ def test__Ledger__scenario__shared_expense(ledger):
             old_debitor="renan",
             new_debitor="baptiste",
         ),
+        Debt(
+            amount=Money("30.00"),
+            creditor="baptiste",
+            debitor="renan",
+            subject="lunch at baustelle",
+        ),
     ]
     assert ledger.state == {
         "antoine": Account(balance=Money("-95.00"), diff=Money("53.34")),
-        "baptiste": Account(balance=Money("-30.00"), diff=Money("-51.67")),
-        "renan": Account(balance=Money("0.00"), diff=Money("-1.67")),
+        "baptiste": Account(balance=Money("-30.00"), diff=Money("-21.67")),
+        "renan": Account(balance=Money("0.00"), diff=Money("-31.67")),
     }
 
 

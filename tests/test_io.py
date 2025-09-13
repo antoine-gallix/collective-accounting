@@ -3,6 +3,7 @@ from collective_accounting.money import Money
 from collective_accounting.operations import (
     AddAccount,
     AddPot,
+    Debt,
     PaysContribution,
     Reimburse,
     RemoveAccount,
@@ -46,16 +47,31 @@ def test__SharedExpense():
     assert load_operation_from_dict(operation_dict) == operation
 
 
+def test__Debt():
+    operation = Debt(
+        amount=Money(10), debitor="baptiste", creditor="renan", subject="eggs"
+    )
+    operation_dict = operation_as_dict(operation)
+    assert operation_dict == {
+        "operation": "Debt",
+        "amount": 10.0,
+        "creditor": "renan",
+        "debitor": "baptiste",
+        "subject": "eggs",
+    }
+    assert load_operation_from_dict(operation_dict) == operation
+
+
 def test__TransferDebt():
     operation = TransferDebt(
-        amount=Money(10), old_debitor="antoine", new_debitor="antoine"
+        amount=Money(10), old_debitor="antoine", new_debitor="renan"
     )
     operation_dict = operation_as_dict(operation)
     assert operation_dict == {
         "operation": "TransferDebt",
         "amount": 10.0,
         "old_debitor": "antoine",
-        "new_debitor": "antoine",
+        "new_debitor": "renan",
     }
     assert load_operation_from_dict(operation_dict) == operation
 

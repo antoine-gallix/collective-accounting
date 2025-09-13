@@ -14,6 +14,7 @@ from .money import Money
 from .operations import (
     AddAccount,
     AddPot,
+    Debt,
     Operation,
     PaysContribution,
     Reimburse,
@@ -98,6 +99,11 @@ class Ledger:
 
     def add_pot(self):
         self.record(AddPot())
+
+    def record_debt(self, amount, creditor, debitor, subject):
+        self.record(
+            Debt(Money(amount), creditor=creditor, debitor=debitor, subject=subject)
+        )
 
     def record_shared_expense(self, amount, name, subject):
         self.record(SharedExpense(Money(amount), name, subject))

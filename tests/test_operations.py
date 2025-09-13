@@ -5,6 +5,7 @@ from collective_accounting.money import Money
 from collective_accounting.operations import (
     AddAccount,
     AddPot,
+    Debt,
     PaysContribution,
     Reimburse,
     RemoveAccount,
@@ -77,6 +78,19 @@ def test__CreatePot__already_exist(state):
 
 
 # -------- debt movement
+
+
+def test__Operation__debt(state):
+    operation = Debt(
+        amount=Money(10), debitor="renan", creditor="antoine", subject="lunch"
+    )
+    assert operation.description == "renan owes 10.00 to antoine for lunch"
+    operation.apply_to(state)
+    assert state == {
+        "antoine": Account(balance=Money("0.00"), diff=Money("10.00")),
+        "baptiste": Account(balance=Money("0.00"), diff=Money("0.00")),
+        "renan": Account(balance=Money("0.00"), diff=Money("-10.00")),
+    }
 
 
 def test__SharedExpense(state):

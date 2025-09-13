@@ -67,6 +67,25 @@ class AddPot(Operation):
 
 
 @dataclass
+class Debt(Operation):
+    amount: Money
+    creditor: Name
+    debitor: Name
+    subject: str
+
+    @property
+    def description(self):
+        return (
+            f"{self.debitor} owes {self.amount} to {self.creditor} for {self.subject}"
+        )
+
+    def apply_to(self, state: LedgerState):
+        state.create_debt(
+            amount=self.amount, creditors=[self.creditor], debitors=[self.debitor]
+        )
+
+
+@dataclass
 class SharedExpense(Operation):
     amount: Money
     payer: Name
