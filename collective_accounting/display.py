@@ -1,3 +1,5 @@
+import pathlib
+
 import arrow
 import funcy
 from rich.align import Align
@@ -9,10 +11,10 @@ from rich.rule import Rule
 from rich.table import Table
 from rich.text import Text
 
-from .models import (
+from .ledger import Ledger
+from .operations import (
     AddAccount,
     AddPot,
-    Ledger,
     PaysContribution,
     Reimburse,
     RemoveAccount,
@@ -20,7 +22,16 @@ from .models import (
     SharedExpense,
     Transfer,
 )
-from .utils import file_creation_timestamp, file_modification_timestamp
+
+
+@funcy.ignore(FileNotFoundError)
+def file_modification_timestamp(path):
+    return pathlib.Path(path).stat().st_mtime
+
+
+@funcy.ignore(FileNotFoundError)
+def file_creation_timestamp(path):
+    return pathlib.Path(path).stat().st_atime
 
 
 def format_timestamp(timestamp) -> str:
@@ -41,7 +52,7 @@ def make_file_info_view(ledger):
     )
 
 
-def format_balance(balance) -> Text:
+def format_diff(balance) -> Text:
     balance_float = float(balance)
     if balance_float > 0:
         return Text(str(balance), style="green")
@@ -51,28 +62,24 @@ def format_balance(balance) -> Text:
         return Text(str(balance), style="blue")
 
 
-def make_balance_display(ledger, name):
-    return Text(name) + ":" + format_balance(ledger.state[name])
-
-
-def make_pot_account_display(ledger):
-    return f"Pot Account:{ledger.pot}"
-
-
-def make_user_account_display(ledger): ...
+def make_diff_display(ledger, name):
+    return Text(name) + ":" + format_diff(ledger.state[name].diff)
 
 
 def make_state_view(ledger):
     if ledger.state.has_pot:
         return Group(
             Columns(
-                [make_balance_display(ledger, "POT"), make_pot_account_display(ledger)],
+                [
+                    Text(f"Pot Balance:{ledger.state['POT'].balance}"),
+                    Text(f"Pot Diff:{format_diff(ledger.state['POT'].diff)}"),
+                ],
                 expand=True,
             ),
             Rule(),
             Columns(
                 (
-                    make_balance_display(ledger, name)
+                    make_diff_display(ledger, name)
                     for name in ledger.state
                     if name != "POT"
                 ),
@@ -81,15 +88,13 @@ def make_state_view(ledger):
         )
     else:
         return Columns(
-            (make_balance_display(ledger, name) for name in ledger.state), expand=True
+            (make_diff_display(ledger, name) for name in ledger.state), expand=True
         )
 
 
 def make_operation_view(ledger) -> Table:
     table = Table.grid(padding=(0, 5))
-    for i, operation in reversed(
-        list(enumerate(funcy.pluck_attr("operation", ledger.records), start=1))
-    ):
+    for i, operation in reversed(list(enumerate(ledger.operations, start=1))):
         match operation:
             # --- edit accounts
             case AddAccount():
@@ -114,7 +119,7 @@ def make_operation_view(ledger) -> Table:
                 style = ""
         table.add_row(
             str(i),
-            Text(operation.TYPE, style=style),
+            Text(operation.__class__.__name__, style=style),
             operation.description,
         )
     return table
@@ -158,7 +163,7 @@ def build_ledger_view():
     )
 
     screen.get("left").update(  # type:ignore
-        CenteredPanel(make_state_view(ledger), title="Account balances")
+        CenteredPanel(make_state_view(ledger), title="Accounts")
     )
     screen.get("right").update(  # type:ignore
         CenteredPanel(
