@@ -200,3 +200,48 @@ def test__Ledger__load_from_file(ledger_with_operations, tmp_ledger_file):
     ledger_with_operations.save_to_file()
     ledger_loaded = Ledger.load_from_file()
     assert ledger_loaded.state == ledger_with_operations.state
+
+
+def test__Ledger__edit(ledger, tmp_ledger_file):
+    ledger.save_to_file()
+    with Ledger.edit() as ledger_under_edit:
+        ledger_under_edit.record_transfer(10, "antoine", "baptiste")
+    ledger_loaded = Ledger.load_from_file()
+    assert ledger_loaded.state == {
+        "antoine": Account(
+            balance=Money("-10.00"),
+            diff=Money("10.00"),
+        ),
+        "baptiste": Account(
+            balance=Money("10.00"),
+            diff=Money("-10.00"),
+        ),
+        "renan": Account(
+            balance=Money("0.00"),
+            diff=Money("0.00"),
+        ),
+    }
+    assert ledger_loaded.operations == [
+        AddAccount(
+            name="antoine",
+        ),
+        AddAccount(
+            name="baptiste",
+        ),
+        AddAccount(
+            name="renan",
+        ),
+        Transfer(
+            amount=Money("10.00"),
+            sender="antoine",
+            receiver="baptiste",
+        ),
+    ]
+    try:
+        with Ledger.edit() as ledger_under_edit:
+            ledger_under_edit.add_account("antoine")
+    except RuntimeError:
+        pass
+    ledger_loaded_again = Ledger.load_from_file()
+    assert ledger_loaded_again.state == ledger_loaded.state
+    assert ledger_loaded_again.operations == ledger_loaded.operations
