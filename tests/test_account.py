@@ -32,7 +32,7 @@ def test__Account__defaults():
     assert account == Account(balance=Money(0), diff=Money(0))
 
 
-def test__Account__expect(account):
+def test__Account__change_diff(account):
     # positive
     account.change_diff(Money(10))
     assert account == Account(balance=Money(0), diff=Money(10))
@@ -169,7 +169,7 @@ def test__LedgerState__check_equilibrium(ledger_state):
 # --------
 
 
-def test__operations__ChangeBalances__one_to_one(ledger_state):
+def test__LedgerState__create_debt__one_to_one(ledger_state):
     ledger_state.create_debt(
         amount=Money(10), creditors=["antoine"], debitors=["baptiste"]
     )
@@ -180,7 +180,7 @@ def test__operations__ChangeBalances__one_to_one(ledger_state):
     }
 
 
-def test__operations__ChangeBalances__one_to_two(ledger_state):
+def test__LedgerState__create_debt__one_to_two(ledger_state):
     ledger_state.create_debt(
         amount=Money(10), creditors=["antoine", "renan"], debitors=["baptiste"]
     )
@@ -191,7 +191,7 @@ def test__operations__ChangeBalances__one_to_two(ledger_state):
     }
 
 
-def test__operations__ChangeBalances__one_to_all(ledger_state):
+def test__LedgerState__create_debt__one_to_all(ledger_state):
     ledger_state.create_debt(amount=Money(10), creditors=None, debitors=["baptiste"])
     assert ledger_state == {
         "antoine": Account(balance=Money("0.00"), diff=Money("3.34")),
@@ -200,7 +200,7 @@ def test__operations__ChangeBalances__one_to_all(ledger_state):
     }
 
 
-def test__operations__ChangeBalances__two_to_one(ledger_state):
+def test__LedgerState__create_debt__two_to_one(ledger_state):
     ledger_state.create_debt(
         amount=Money(10), creditors=["renan"], debitors=["baptiste", "antoine"]
     )
@@ -211,7 +211,7 @@ def test__operations__ChangeBalances__two_to_one(ledger_state):
     }
 
 
-def test__operations__ChangeBalances__two_to_two(ledger_state):
+def test__LedgerState__create_debt__two_to_two(ledger_state):
     ledger_state.create_debt(
         amount=Money(10),
         creditors=["renan", "baptiste"],
@@ -224,7 +224,7 @@ def test__operations__ChangeBalances__two_to_two(ledger_state):
     }
 
 
-def test__operations__ChangeBalances__two_to_all(ledger_state):
+def test__LedgerState__create_debt__two_to_all(ledger_state):
     ledger_state.create_debt(
         amount=Money(10), creditors=None, debitors=["baptiste", "antoine"]
     )
@@ -235,7 +235,7 @@ def test__operations__ChangeBalances__two_to_all(ledger_state):
     }
 
 
-def test__operations__ChangeBalances__all_to_one(ledger_state):
+def test__LedgerState__create_debt__all_to_one(ledger_state):
     ledger_state.create_debt(amount=Money(10), creditors=["antoine"], debitors=None)
     assert ledger_state == {
         "antoine": Account(balance=Money("0.00"), diff=Money("6.66")),
@@ -244,7 +244,7 @@ def test__operations__ChangeBalances__all_to_one(ledger_state):
     }
 
 
-def test__operations__ChangeBalances__all_to_two(ledger_state):
+def test__LedgerState__create_debt__all_to_two(ledger_state):
     ledger_state.create_debt(
         amount=Money(10), creditors=["antoine", "baptiste"], debitors=None
     )
@@ -255,7 +255,7 @@ def test__operations__ChangeBalances__all_to_two(ledger_state):
     }
 
 
-def test__operations__ChangeBalances__all_to_all(ledger_state):
+def test__LedgerState__create_debt__all_to_all(ledger_state):
     ledger_state.create_debt(amount=Money(10), creditors=None, debitors=None)
     assert ledger_state == {
         "antoine": Account(balance=Money("0.00"), diff=Money("0.00")),
