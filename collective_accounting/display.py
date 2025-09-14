@@ -44,10 +44,16 @@ def make_file_info_view(ledger):
     file_path = Ledger.LEDGER_FILE
     return Columns(
         (
-            Text(f"file:{file_path}"),
-            Text(f"creation:{format_timestamp(file_creation_timestamp(file_path))}"),
-            Text(
-                f"last update:{format_timestamp(file_modification_timestamp(file_path))}"
+            Text("file: ") + Text(f"{file_path}", style="blue"),
+            Text("creation: ")
+            + Text(
+                format_timestamp(file_creation_timestamp(file_path)),
+                style="blue",
+            ),
+            Text("last update: ")
+            + Text(
+                format_timestamp(file_modification_timestamp(file_path)),
+                style="blue",
             ),
         ),
         expand=True,
