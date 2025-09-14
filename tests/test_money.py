@@ -18,6 +18,10 @@ def test__Money__str():
     assert str(Money(3.5)) == "+3.50€"
 
 
+def test__Money__format():
+    assert f"{Money(3.5)}" == "+3.50€"
+
+
 def test__Money__divide():
     assert Money(9).divide_with_no_rest(3) == [Money(3), Money(3), Money(3)]
     assert Money(10).divide_with_no_rest(3) == [
