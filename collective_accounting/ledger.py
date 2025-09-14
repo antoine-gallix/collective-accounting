@@ -68,7 +68,8 @@ class Ledger:
         logger.debug("replay operations")
         ledger = cls()
         for operation in operations:
-            ledger.record(operation)
+            logger.debug(f"apply operation: {operation}")
+            ledger.apply(operation)
         logger.debug("ledger loaded")
         return ledger
 
@@ -81,8 +82,7 @@ class Ledger:
 
     # ------------------------ record ------------------------
 
-    def record(self, operation):
-        logger.debug(f"record operation: {operation}")
+    def apply(self, operation):
         try:
             new_state = copy(self.state)
             operation.apply_to(new_state)
@@ -93,6 +93,10 @@ class Ledger:
         self.records.append(LedgerRecord(operation=operation, state=new_state))
 
     # ------------------------ convenience ------------------------
+
+    def record(self, operation):
+        logger.debug(f"record operation: {operation}")
+        self.apply(operation)
 
     def add_account(self, name):
         self.record(AddAccount(name))
