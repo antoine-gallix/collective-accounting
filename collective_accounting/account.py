@@ -83,6 +83,10 @@ class LedgerState(dict[Name, Account]):
         return "POT" in self
 
     @property
+    def user_accounts(self):
+        return funcy.omit(self, "POT")
+
+    @property
     def pot(self):
         return self["POT"]
 
