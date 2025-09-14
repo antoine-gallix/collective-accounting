@@ -76,7 +76,7 @@ def make_pot_state(ledger):
 def make_accounts_table(ledger):
     table = Table.grid(padding=(0, 2), expand=True)
     for name, account in sorted(
-        ledger.state.user_accounts,
+        ledger.state.user_accounts.items(),
         key=lambda item: item[1].diff,
         reverse=True,
     ):
