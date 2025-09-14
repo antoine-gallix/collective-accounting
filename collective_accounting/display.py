@@ -120,13 +120,17 @@ def operation_color(operation):
             return ""
 
 
+def operation_description(operation):
+    return operation.description
+
+
 def make_operation_view(ledger) -> Table:
     table = Table.grid(padding=(0, 2))
     for i, operation in reversed(list(enumerate(ledger.operations, start=1))):
         table.add_row(
             str(i),
             Text(operation.__class__.__name__, style=operation_color(operation)),
-            operation.description,
+            operation_description(operation),
         )
     return table
 
