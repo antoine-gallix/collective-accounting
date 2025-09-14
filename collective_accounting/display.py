@@ -95,34 +95,37 @@ def make_state_view(ledger):
         return make_accounts_table(ledger)
 
 
+def operation_color(operation):
+    match operation:
+        # --- edit accounts
+        case AddAccount():
+            return "cyan"
+        case RemoveAccount():
+            return "cyan"
+        case AddPot():
+            return "cyan"
+        # --- spending and requesting money
+        case SharedExpense():
+            return "yellow"
+        case RequestContribution():
+            return "red"
+        # --- balancing
+        case Transfer():
+            return "green"
+        case Reimburse():
+            return "green"
+        case PaysContribution():
+            return "green"
+        case _:
+            return ""
+
+
 def make_operation_view(ledger) -> Table:
     table = Table.grid(padding=(0, 2))
     for i, operation in reversed(list(enumerate(ledger.operations, start=1))):
-        match operation:
-            # --- edit accounts
-            case AddAccount():
-                style = "cyan"
-            case RemoveAccount():
-                style = "cyan"
-            case AddPot():
-                style = "cyan"
-            # --- spending and requesting money
-            case SharedExpense():
-                style = "yellow"
-            case RequestContribution():
-                style = "red"
-            # --- balancing
-            case Transfer():
-                style = "green"
-            case Reimburse():
-                style = "green"
-            case PaysContribution():
-                style = "green"
-            case _:
-                style = ""
         table.add_row(
             str(i),
-            Text(operation.__class__.__name__, style=style),
+            Text(operation.__class__.__name__, style=operation_color(operation)),
             operation.description,
         )
     return table
