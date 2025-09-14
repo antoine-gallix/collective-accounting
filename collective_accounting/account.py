@@ -82,6 +82,10 @@ class LedgerState(dict[Name, Account]):
     def has_pot(self):
         return "POT" in self
 
+    @property
+    def pot(self):
+        return self["POT"]
+
     def change_balance(self, name: str, amount: Money):
         logger.debug(f"balance change: {name} {amount!s}")
         try:

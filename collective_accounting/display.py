@@ -68,8 +68,8 @@ def make_diff_display(ledger, name):
 
 def make_pot_state(ledger):
     table = Table.grid(padding=(0, 2), expand=True)
-    table.add_row("Pot Balance", str(ledger.state["POT"].balance))
-    table.add_row("Pot Diff", format_diff(ledger.state["POT"].diff))
+    table.add_row("Pot Balance", str(ledger.state.pot.balance))
+    table.add_row("Pot Diff", format_diff(ledger.state.pot.diff))
     return table
 
 
