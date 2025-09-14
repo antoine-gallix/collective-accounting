@@ -55,9 +55,9 @@ def make_file_info_view(ledger):
 def format_diff(balance) -> Text:
     balance_float = float(balance)
     if balance_float > 0:
-        return Text(str(balance), style="green")
+        return Text(format(balance, "+"), style="green")
     elif balance_float < 0:
-        return Text(str(balance), style="red")
+        return Text(format(balance, "+"), style="red")
     else:
         return Text(str(balance), style="blue")
 
@@ -66,34 +66,33 @@ def make_diff_display(ledger, name):
     return Text(name) + ":" + format_diff(ledger.state[name].diff)
 
 
+def make_pot_state(ledger):
+    table = Table.grid(padding=(0, 2), expand=True)
+    table.add_row("Pot Balance", str(ledger.state["POT"].balance))
+    table.add_row("Pot Diff", format_diff(ledger.state["POT"].diff))
+    return table
+
+
+def make_accounts_table(ledger):
+    table = Table.grid(padding=(0, 2), expand=True)
+    for name, account in funcy.omit(ledger.state, "POT").items():
+        table.add_row(name, format_diff(account.diff))
+    return table
+
+
 def make_state_view(ledger):
     if ledger.state.has_pot:
         return Group(
-            Columns(
-                [
-                    Text(f"Pot Balance:{ledger.state['POT'].balance}"),
-                    Text(f"Pot Diff:{format_diff(ledger.state['POT'].diff)}"),
-                ],
-                expand=True,
-            ),
+            make_pot_state(ledger),
             Rule(),
-            Columns(
-                (
-                    make_diff_display(ledger, name)
-                    for name in ledger.state
-                    if name != "POT"
-                ),
-                expand=True,
-            ),
+            make_accounts_table(ledger),
         )
     else:
-        return Columns(
-            (make_diff_display(ledger, name) for name in ledger.state), expand=True
-        )
+        return make_accounts_table(ledger)
 
 
 def make_operation_view(ledger) -> Table:
-    table = Table.grid(padding=(0, 5))
+    table = Table.grid(padding=(0, 2))
     for i, operation in reversed(list(enumerate(ledger.operations, start=1))):
         match operation:
             # --- edit accounts
