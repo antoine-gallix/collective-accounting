@@ -104,18 +104,22 @@ def operation_color(operation):
             return "cyan"
         case AddPot():
             return "cyan"
-        # --- spending and requesting money
+        # --- money movement
         case SharedExpense():
-            return "yellow"
-        case RequestContribution():
             return "red"
-        # --- balancing
         case Transfer():
-            return "green"
+            return "red"
         case Reimburse():
-            return "green"
+            return "red"
         case PaysContribution():
-            return "green"
+            return "red"
+        # --- debt movement
+        case RequestContribution():
+            return "blue"
+        case Debt():
+            return "blue"
+        case TransferDebt():
+            return "blue"
         case _:
             return ""
 
