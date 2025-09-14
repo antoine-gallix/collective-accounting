@@ -15,12 +15,14 @@ from .ledger import Ledger
 from .operations import (
     AddAccount,
     AddPot,
+    Debt,
     PaysContribution,
     Reimburse,
     RemoveAccount,
     RequestContribution,
     SharedExpense,
     Transfer,
+    TransferDebt,
 )
 
 
