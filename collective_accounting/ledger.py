@@ -1,11 +1,11 @@
 import pathlib
+from contextlib import contextmanager
 from copy import copy
 from dataclasses import dataclass, field
 from typing import Self
 
 import funcy
 import yaml
-from decorator import contextmanager
 
 from .account import LedgerState
 from .io import load_operation_from_dict, operation_as_dict
