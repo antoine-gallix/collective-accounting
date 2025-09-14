@@ -18,10 +18,10 @@ class Money(Decimal):
         return f"{self.__class__.__name__}('{self}')"
 
     def __str__(self):
-        return super().__format__("+") + self.CURRENCY
+        return super().__str__() + self.CURRENCY
 
-    def __format__(self, _):
-        return str(self)
+    def __format__(self, fmt):  # type:ignore
+        return super().__format__(fmt) + self.CURRENCY
 
     def __add__(self, something):
         return self.__class__(super().__add__(something))
