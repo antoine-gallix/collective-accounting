@@ -78,6 +78,10 @@ def make_pot_state(ledger):
     table = Table.grid(padding=(0, 2), expand=True)
     table.add_row("Pot Balance", str(ledger.state.pot.balance))
     table.add_row("Pot Diff", format_diff(ledger.state.pot.diff))
+    table.add_row(
+        "Pot Expected Balance",
+        format_diff(ledger.state.pot.balance + ledger.state.pot.diff),
+    )
     return table
 
 
