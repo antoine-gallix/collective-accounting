@@ -11,7 +11,9 @@ from rich.rule import Rule
 from rich.table import Table
 from rich.text import Text
 
+from .account import Name
 from .ledger import Ledger
+from .money import Money
 from .operations import (
     AddAccount,
     AddPot,
@@ -107,37 +109,120 @@ def make_state_view(ledger):
         return make_accounts_table(ledger)
 
 
-def operation_color(operation):
+def style_operation_name(operation):
     match operation:
         # --- edit accounts
         case AddAccount():
-            return "cyan"
+            style = "cyan"
         case RemoveAccount():
-            return "cyan"
+            style = "cyan"
         case AddPot():
-            return "cyan"
+            style = "cyan"
         # --- money movement
         case SharedExpense():
-            return "red"
+            style = "red"
         case Transfer():
-            return "red"
+            style = "red"
         case Reimburse():
-            return "red"
+            style = "red"
         case PaysContribution():
-            return "red"
+            style = "red"
         # --- debt movement
         case RequestContribution():
-            return "blue"
+            style = "blue"
         case Debt():
-            return "blue"
+            style = "blue"
         case TransferDebt():
-            return "blue"
+            style = "blue"
+        case _:
+            style = ""
+    return Text(operation.__class__.__name__, style=style)
+
+
+def style_name(name: Name):
+    return Text(name, style="blue")
+
+
+def style_money(amount: Money):
+    return Text(str(amount), style="green")
+
+
+def style_text(text: str):
+    return Text(text, style="yellow")
+
+
+def describe_operation(operation):
+    match operation:
+        case AddAccount():
+            return style_name(operation.name)
+        case RemoveAccount():
+            return style_name(operation.name)
+        case AddPot():
+            return Text("Add a common pot to the group")
+        # --- money movement
+        case SharedExpense():
+            return Text.assemble(
+                Text(),
+                style_name(operation.payer),
+                Text(" pays "),
+                style_money(operation.amount),
+                Text(" for "),
+                style_text(operation.subject),
+            )
+        case Transfer():
+            return Text.assemble(
+                Text()
+                + style_name(operation.sender)
+                + Text(" sends ")
+                + style_money(operation.amount)
+                + Text(" to ")
+                + style_name(operation.receiver),
+            )
+        case Reimburse():
+            return (
+                Text("Reimburse ")
+                + style_money(operation.amount)
+                + Text(" to ")
+                + style_name(operation.receiver)
+                + Text(" from the pot")
+            )
+        case PaysContribution():
+            return (
+                Text()
+                + style_name(operation.sender)
+                + Text(" contributes ")
+                + style_money(operation.amount)
+                + Text(" to the pot")
+            )
+        # --- debt movement
+        case Debt():
+            return (
+                Text()
+                + style_name(operation.debitor)
+                + " owes "
+                + style_money(operation.amount)
+                + " to "
+                + style_name(operation.creditor)
+                + " for "
+                + style_text(operation.subject)
+            )
+        case RequestContribution():
+            return (
+                Text("Request contribution of ")
+                + style_money(operation.amount)
+                + Text(" from everyone")
+            )
+        case TransferDebt():
+            return (
+                Text()
+                + style_name(operation.new_debitor)
+                + Text(" covers ")
+                + style_money(operation.amount)
+                + Text(" of debt from ")
+                + style_name(operation.old_debitor)
+            )
         case _:
             return ""
-
-
-def operation_description(operation):
-    return operation.description
 
 
 def make_operation_view(ledger) -> Table:
@@ -145,8 +230,8 @@ def make_operation_view(ledger) -> Table:
     for i, operation in reversed(list(enumerate(ledger.operations, start=1))):
         table.add_row(
             str(i),
-            Text(operation.__class__.__name__, style=operation_color(operation)),
-            operation_description(operation),
+            style_operation_name(operation),
+            describe_operation(operation),
         )
     return table
 

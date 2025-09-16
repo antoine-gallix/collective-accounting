@@ -40,7 +40,6 @@ def state_with_pot(state):
 
 def test__AddAccount(new_state):
     operation = AddAccount("antoine")
-    assert str(operation) == "AddAccount: antoine"
     operation.apply_to(new_state)
     assert list(new_state.keys()) == ["antoine"]
 
@@ -59,7 +58,6 @@ def test__RemoveAccount(state):
 
 def test__CreatePot(state):
     operation = AddPot()
-    assert operation.description == "Add a common pot to the group"
     operation.apply_to(state)
     assert state == {
         "POT": PositiveAccount(balance=Money("0.00"), diff=Money("0.00")),
@@ -84,7 +82,6 @@ def test__Operation__debt(state):
     operation = Debt(
         amount=Money(10), debitor="renan", creditor="antoine", subject="lunch"
     )
-    assert operation.description == "renan owes 10.00€ to antoine for lunch"
     operation.apply_to(state)
     assert state == {
         "antoine": Account(balance=Money("0.00"), diff=Money("10.00")),
@@ -97,7 +94,6 @@ def test__SharedExpense(state):
     operation = SharedExpense(
         amount=Money(100), payer="antoine", subject="renting a van"
     )
-    assert operation.description == "antoine has paid 100.00€ for renting a van"
     operation.apply_to(state)
     assert state == {
         "antoine": Account(balance=Money("-100.00"), diff=Money("66.66")),
@@ -110,7 +106,6 @@ def test__SharedExpense_with_pot(state_with_pot):
     operation = SharedExpense(
         amount=Money(100), payer="antoine", subject="renting a van"
     )
-    assert operation.description == "antoine has paid 100.00€ for renting a van"
     operation.apply_to(state_with_pot)
     assert state_with_pot == {
         "antoine": Account(balance=Money("-100.00"), diff=Money("100.00")),
@@ -124,7 +119,6 @@ def test__TransferDebt(state):
     operation = TransferDebt(
         amount=Money(100), old_debitor="baptiste", new_debitor="renan"
     )
-    assert operation.description == "renan covers 100.00€ of debt from baptiste"
     operation.apply_to(state)
     assert state == {
         "antoine": Account(balance=Money("0.00"), diff=Money("0.00")),
@@ -135,7 +129,6 @@ def test__TransferDebt(state):
 
 def test__RequestContribution(state_with_pot):
     operation = RequestContribution(Money(100))
-    assert operation.description == "Request contribution of 100.00€ from everyone"
     operation.apply_to(state_with_pot)
     assert state_with_pot == {
         "antoine": Account(balance=Money("0.00"), diff=Money("-100.00")),
@@ -156,7 +149,6 @@ def test__operation__RequestContribution__no_pot(state):
 
 def test__Transfer(state):
     operation = Transfer(amount=Money(100), sender="baptiste", receiver="antoine")
-    assert operation.description == "baptiste has sent 100.00€ to antoine"
     operation.apply_to(state)
     assert state == {
         "antoine": Account(balance=Money("100.00"), diff=Money("-100.00")),
@@ -168,7 +160,6 @@ def test__Transfer(state):
 def test__operation__Reimburse(state_with_pot):
     state_with_pot.change_balance("POT", Money("100"))
     operation = Reimburse(Money(50), "antoine")
-    assert operation.description == "Reimburse 50.00€ to antoine from the pot"
     operation.apply_to(state_with_pot)
     assert state_with_pot == {
         "antoine": Account(balance=Money("50.00"), diff=Money("-50.00")),
@@ -186,7 +177,6 @@ def test__operation__Reimburse__no_pot(state):
 
 def test__operation__PaysContribution(state_with_pot):
     operation = PaysContribution(amount=Money(100), sender="antoine")
-    assert operation.description == "antoine contribute 100.00€ to the pot"
     operation.apply_to(state_with_pot)
     assert state_with_pot == {
         "antoine": Account(balance=Money("-100.00"), diff=Money("100.00")),
