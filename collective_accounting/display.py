@@ -78,12 +78,21 @@ def make_diff_display(ledger, name):
 
 def make_pot_state(ledger):
     table = Table.grid(padding=(0, 2), expand=True)
-    table.add_row("Pot Balance", str(ledger.state.pot.balance))
+    table.add_row("Pot Balance", Text(str(ledger.state.pot.balance), style="blue"))
     table.add_row("Pot Diff", format_diff(ledger.state.pot.diff))
-    table.add_row(
-        "Pot Expected Balance",
-        format_diff(ledger.state.pot.balance + ledger.state.pot.diff),
-    )
+
+    if (pot_expected_balance := ledger.state.pot.balance + ledger.state.pot.diff) < 0:
+        table.add_row(
+            "Expected Pot Deficit",
+            Text(str(-pot_expected_balance), style="red"),
+        )
+    elif pot_expected_balance > 0:
+        table.add_row(
+            "Expected Pot Excedent",
+            Text(str(pot_expected_balance), style="green"),
+        )
+    else:
+        table.add_row("Expected Pot State", Text("0"), style="green")
     return table
 
 
@@ -225,6 +234,26 @@ def describe_operation(operation):
             return ""
 
 
+def make_summary_view(ledger):
+    table = Table.grid(padding=(0, 2))
+    table.add_row("users", Text(str(len(ledger.state.user_accounts)), style="blue"))
+    table.add_row(
+        "pot", Text("yes", style="blue") if ledger.state.has_pot else Text("no")
+    )
+    table.add_row(
+        "expenses",
+        Text(
+            str(
+                -sum(
+                    (account.balance for account in ledger.state.user_accounts.values())
+                )
+            ),
+            style="yellow",
+        ),
+    )
+    return table
+
+
 def make_operation_view(ledger) -> Table:
     table = Table.grid(padding=(0, 2))
     for i, operation in reversed(list(enumerate(ledger.operations, start=1))):
@@ -272,8 +301,13 @@ def build_ledger_view():
         Layout(name="left", ratio=2),
         Layout(name="right", ratio=3),
     )
-
-    screen.get("left").update(  # type:ignore
+    screen.get("left").split_column(
+        Layout(name="summary", size=5), Layout(name="accounts")
+    )  # type:ignore
+    screen.get("summary").update(  # type:ignore
+        CenteredPanel(make_summary_view(ledger), title="Summary")
+    )
+    screen.get("accounts").update(  # type:ignore
         CenteredPanel(make_state_view(ledger), title="Accounts")
     )
     screen.get("right").update(  # type:ignore
