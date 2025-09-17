@@ -18,8 +18,11 @@ class Operation(ABC):
 # -------- account management
 
 
+class AccountOperation(Operation): ...
+
+
 @dataclass
-class AddAccount(Operation):
+class AddAccount(AccountOperation):
     name: Name
 
     def apply_to(self, state: LedgerState):
@@ -29,14 +32,14 @@ class AddAccount(Operation):
 
 
 @dataclass
-class RemoveAccount(Operation):
+class RemoveAccount(AccountOperation):
     name: Name
 
     def apply_to(self, state: LedgerState):
         state.remove_account(self.name)
 
 
-class AddPot(Operation):
+class AddPot(AccountOperation):
     def apply_to(self, state: LedgerState):  # type:ignore
         if state.has_pot:
             raise RuntimeError("Ledger already has a pot")
@@ -47,8 +50,11 @@ class AddPot(Operation):
 # -------- debt movements
 
 
+class AccountingOperation(Operation): ...
+
+
 @dataclass
-class Debt(Operation):
+class Debt(AccountingOperation):
     amount: Money
     creditor: Name
     debitor: Name
@@ -61,7 +67,7 @@ class Debt(Operation):
 
 
 @dataclass
-class TransferDebt(Operation):
+class TransferDebt(AccountingOperation):
     amount: Money
     old_debitor: Name
     new_debitor: Name
@@ -75,7 +81,7 @@ class TransferDebt(Operation):
 
 
 @dataclass
-class RequestContribution(Operation):
+class RequestContribution(AccountingOperation):
     amount: Money
 
     def apply_to(self, state: LedgerState):
@@ -92,7 +98,7 @@ class RequestContribution(Operation):
 
 
 @dataclass
-class SharedExpense(Operation):
+class SharedExpense(AccountingOperation):
     amount: Money
     payer: Name
     subject: str
@@ -108,7 +114,7 @@ class SharedExpense(Operation):
 
 
 @dataclass
-class Transfer(Operation):
+class Transfer(AccountingOperation):
     amount: Money
     sender: Name
     receiver: Name
@@ -120,7 +126,7 @@ class Transfer(Operation):
 
 
 @dataclass
-class Reimburse(Operation):
+class Reimburse(AccountingOperation):
     amount: Money
     receiver: Name
 
@@ -133,7 +139,7 @@ class Reimburse(Operation):
 
 
 @dataclass
-class PaysContribution(Operation):
+class PaysContribution(AccountingOperation):
     amount: Money
     sender: Name
 
