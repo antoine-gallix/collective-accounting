@@ -301,9 +301,9 @@ def build_ledger_view():
         Layout(name="left", ratio=2),
         Layout(name="right", ratio=3),
     )
-    screen.get("left").split_column(
+    screen.get("left").split_column(  # type:ignore
         Layout(name="summary", size=5), Layout(name="accounts")
-    )  # type:ignore
+    )
     screen.get("summary").update(  # type:ignore
         CenteredPanel(make_summary_view(ledger), title="Summary")
     )
