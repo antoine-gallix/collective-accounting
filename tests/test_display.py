@@ -72,7 +72,7 @@ def test__describe__SharedExpense():
         describe_operation(
             SharedExpense(amount=Money(100), payer="antoine", subject="renting a van")
         ).markup
-        == "[blue]antoine[/blue] pays [green]100.00€[/green] for [orange]renting a van[/orange]"
+        == "[blue]antoine[/blue] pays [green]100.00€[/green] for [yellow]renting a van[/yellow]"
     )
 
 
@@ -105,7 +105,7 @@ def test__describe__Debt():
         describe_operation(
             Debt(amount=Money(10), debitor="renan", creditor="antoine", subject="lunch")
         ).markup
-        == "[blue]renan[/blue] owes [green]10.00€[/green] to [blue]antoine[/blue] for [orange]lunch[/orange]"
+        == "[blue]renan[/blue] owes [green]10.00€[/green] to [blue]antoine[/blue] for [yellow]lunch[/yellow]"
     )
 
 
