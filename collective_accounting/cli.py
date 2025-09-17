@@ -130,7 +130,7 @@ def record_transfer(amount, by, to):
 def record_transfer_debt(amount, origin, to):
     """Record debt transfered from a user to another"""
     with Ledger.edit() as ledger:
-        ledger.record_transfer_debt(amount=amount, origin=origin, to=to)
+        ledger.record_transfer_debt(amount=amount, old_debitor=origin, new_debitor=to)
 
 
 @record.command("debt")
