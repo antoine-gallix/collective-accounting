@@ -160,7 +160,7 @@ def style_text(text: str):
     return Text(text, style="yellow")
 
 
-def describe_operation(operation):
+def describe_operation(operation) -> Text:
     match operation:
         case AddAccount():
             return style_name(operation.name)
