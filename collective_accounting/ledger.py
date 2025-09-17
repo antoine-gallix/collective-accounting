@@ -94,39 +94,39 @@ class Ledger:
 
     # ------------------------ convenience ------------------------
 
-    def record(self, operation):
+    def _record(self, operation):
         logger.debug(f"record operation: {operation}")
         self.apply(operation)
 
     def add_account(self, name):
-        self.record(AddAccount(name))
+        self._record(AddAccount(name))
 
     def add_pot(self):
-        self.record(AddPot())
+        self._record(AddPot())
 
     def record_debt(self, amount, creditor, debitor, subject):
-        self.record(
+        self._record(
             Debt(Money(amount), creditor=creditor, debitor=debitor, subject=subject)
         )
 
     def record_shared_expense(self, amount, name, subject):
-        self.record(SharedExpense(Money(amount), name, subject))
+        self._record(SharedExpense(Money(amount), name, subject))
 
     def record_transfer(self, amount, sender, receiver):
-        self.record(Transfer(amount=Money(amount), sender=sender, receiver=receiver))
+        self._record(Transfer(amount=Money(amount), sender=sender, receiver=receiver))
 
     def record_transfer_debt(self, amount, old_debitor, new_debitor):
-        self.record(
+        self._record(
             TransferDebt(
                 amount=Money(amount), old_debitor=old_debitor, new_debitor=new_debitor
             )
         )
 
     def request_contribution(self, amount):
-        self.record(RequestContribution(Money(amount)))
+        self._record(RequestContribution(Money(amount)))
 
     def pays_contribution(self, amount, by):
-        self.record(PaysContribution(Money(amount), by))
+        self._record(PaysContribution(Money(amount), by))
 
     def reimburse(self, amount, to):
-        self.record(Reimburse(Money(amount), to))
+        self._record(Reimburse(Money(amount), to))
