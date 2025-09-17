@@ -61,22 +61,6 @@ class Debt(Operation):
 
 
 @dataclass
-class SharedExpense(Operation):
-    amount: Money
-    payer: Name
-    subject: str
-
-    def apply_to(self, state: LedgerState):
-        state.change_balance(self.payer, amount=-self.amount)
-        if state.has_pot:
-            state.create_debt(
-                amount=self.amount, creditors=[self.payer], debitors=["POT"]
-            )
-        else:
-            state.create_debt(amount=self.amount, creditors=[self.payer], debitors=None)
-
-
-@dataclass
 class TransferDebt(Operation):
     amount: Money
     old_debitor: Name
@@ -102,6 +86,25 @@ class RequestContribution(Operation):
         state.create_debt(
             amount=self.amount * (len(state) - 1), creditors=["POT"], debitors=None
         )
+
+
+# -------- money movements
+
+
+@dataclass
+class SharedExpense(Operation):
+    amount: Money
+    payer: Name
+    subject: str
+
+    def apply_to(self, state: LedgerState):
+        state.change_balance(self.payer, amount=-self.amount)
+        if state.has_pot:
+            state.create_debt(
+                amount=self.amount, creditors=[self.payer], debitors=["POT"]
+            )
+        else:
+            state.create_debt(amount=self.amount, creditors=[self.payer], debitors=None)
 
 
 @dataclass

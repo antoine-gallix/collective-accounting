@@ -90,31 +90,6 @@ def test__Operation__debt(state):
     }
 
 
-def test__SharedExpense(state):
-    operation = SharedExpense(
-        amount=Money(100), payer="antoine", subject="renting a van"
-    )
-    operation.apply_to(state)
-    assert state == {
-        "antoine": Account(balance=Money("-100.00"), diff=Money("66.66")),
-        "baptiste": Account(balance=Money("0.00"), diff=Money("-33.33")),
-        "renan": Account(balance=Money("0.00"), diff=Money("-33.33")),
-    }
-
-
-def test__SharedExpense_with_pot(state_with_pot):
-    operation = SharedExpense(
-        amount=Money(100), payer="antoine", subject="renting a van"
-    )
-    operation.apply_to(state_with_pot)
-    assert state_with_pot == {
-        "antoine": Account(balance=Money("-100.00"), diff=Money("100.00")),
-        "POT": PositiveAccount(balance=Money("0.00"), diff=Money("-100.00")),
-        "baptiste": Account(balance=Money("0.00"), diff=Money("0.00")),
-        "renan": Account(balance=Money("0.00"), diff=Money("0.00")),
-    }
-
-
 def test__TransferDebt(state):
     operation = TransferDebt(
         amount=Money(100), old_debitor="baptiste", new_debitor="renan"
@@ -145,6 +120,31 @@ def test__operation__RequestContribution__no_pot(state):
 
 
 # -------- money movement
+
+
+def test__SharedExpense(state):
+    operation = SharedExpense(
+        amount=Money(100), payer="antoine", subject="renting a van"
+    )
+    operation.apply_to(state)
+    assert state == {
+        "antoine": Account(balance=Money("-100.00"), diff=Money("66.66")),
+        "baptiste": Account(balance=Money("0.00"), diff=Money("-33.33")),
+        "renan": Account(balance=Money("0.00"), diff=Money("-33.33")),
+    }
+
+
+def test__SharedExpense_with_pot(state_with_pot):
+    operation = SharedExpense(
+        amount=Money(100), payer="antoine", subject="renting a van"
+    )
+    operation.apply_to(state_with_pot)
+    assert state_with_pot == {
+        "antoine": Account(balance=Money("-100.00"), diff=Money("100.00")),
+        "POT": PositiveAccount(balance=Money("0.00"), diff=Money("-100.00")),
+        "baptiste": Account(balance=Money("0.00"), diff=Money("0.00")),
+        "renan": Account(balance=Money("0.00"), diff=Money("0.00")),
+    }
 
 
 def test__Transfer(state):
