@@ -38,9 +38,18 @@ def watch():
 
 
 @main.command
-def state():
+@click.option("--color/--no-color", default=True)
+def state(color):
     """Print the state of the accounts"""
-    print(make_state_view(Ledger.load_from_file()))
+    if color:
+        print(make_state_view(Ledger.load_from_file()))
+    else:
+        for name, account in sorted(
+            Ledger.load_from_file().state.user_accounts.items(),
+            key=lambda item: item[1].diff,
+            reverse=True,
+        ):
+            print(f"{name}: {account.diff:+}")
 
 
 @main.command
