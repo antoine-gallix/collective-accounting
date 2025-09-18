@@ -83,8 +83,10 @@ class LedgerState(dict[Name, Account]):
         return "POT" in self
 
     @property
-    def user_accounts(self):
-        return funcy.omit(self, "POT")
+    def user_accounts(self) -> dict:
+        accounts = funcy.omit(self, "POT")
+        assert isinstance(accounts, dict)  # reassure typing
+        return accounts
 
     @property
     def pot(self):
