@@ -143,6 +143,44 @@ def test__Ledger__scenario__pot(ledger):
     }
 
 
+def test__Ledger__scenario__list_expenses(ledger):
+    ledger.record_shared_expense(amount=125, name="antoine", subject="potatoes")
+    ledger.record_shared_expense(amount=60, name="baptiste", subject="pumpkins")
+    ledger.record_shared_expense(amount=30, name="renan", subject="endivias")
+    ledger.record_shared_expense(amount=125, name="antoine", subject="onions")
+    ledger.record_transfer(
+        amount=30,
+        sender="baptiste",
+        receiver="antoine",
+    )
+    assert ledger.expenses == [
+        SharedExpense(
+            amount=Money("125.00"),
+            payer="antoine",
+            subject="potatoes",
+            tags=(),
+        ),
+        SharedExpense(
+            amount=Money("60.00"),
+            payer="baptiste",
+            subject="pumpkins",
+            tags=(),
+        ),
+        SharedExpense(
+            amount=Money("30.00"),
+            payer="renan",
+            subject="endivias",
+            tags=(),
+        ),
+        SharedExpense(
+            amount=Money("125.00"),
+            payer="antoine",
+            subject="onions",
+            tags=(),
+        ),
+    ]
+
+
 # -------- IO
 
 

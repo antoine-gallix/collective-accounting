@@ -47,6 +47,10 @@ class Ledger:
     def operations(self):
         return [record.operation for record in self.records]
 
+    @property
+    def expenses(self):
+        return funcy.lfilter(funcy.rpartial(isinstance, SharedExpense), self.operations)
+
     # ------------------------ IOs ------------------------
 
     def save_to_file(self):
