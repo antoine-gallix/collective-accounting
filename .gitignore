@@ -215,4 +215,5 @@ dev.py
 dev_*.py
 ledger.yml
 ledger_*.yml
+!demo/*
 

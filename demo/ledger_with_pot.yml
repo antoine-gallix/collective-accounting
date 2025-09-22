@@ -1,0 +1,32 @@
+operation: Add Account
+name: Antoine
+---
+operation: Add Account
+name: Baptiste
+---
+operation: Add Account
+name: Renan
+---
+operation: Add Pot
+---
+operation: Request Contribution
+amount: 100.00
+---
+operation: Shared Expense
+amount: 19.58
+by: Antoine
+subject: wood
+---
+operation: Money Transfer
+amount: 4.25
+by: Baptiste
+to: Antoine
+---
+operation: Money Transfer
+amount: 4.25
+by: Renan
+to: Antoine
+---
+operation: Reimburse
+amount: 5
+to: Antoine

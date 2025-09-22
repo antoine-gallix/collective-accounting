@@ -1,0 +1,23 @@
+operation: AddAccount
+name: antoine
+---
+operation: AddAccount
+name: baptiste
+---
+operation: AddAccount
+name: kriti
+---
+operation: SharedExpense
+amount: 50.0
+by: antoine
+subject: tarps
+---
+operation: SharedExpense
+amount: 25.0
+by: kriti
+subject: paint
+---
+operation: SharedExpense
+amount: 5.0
+by: baptiste
+subject: bread
