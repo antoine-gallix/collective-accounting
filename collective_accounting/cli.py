@@ -39,7 +39,7 @@ def watch():
 
 @main.command
 @click.option("--color/--no-color", default=True)
-def state(color):
+def accounts(color):
     """Print the state of the accounts"""
     if color:
         print(make_state_view(Ledger.load_from_file()))
@@ -50,6 +50,14 @@ def state(color):
             reverse=True,
         ):
             print(f"{name}: {account.diff:+}")
+
+
+@main.command
+def operations():
+    """List operations"""
+    ledger = Ledger.load_from_file()
+    for operation in ledger.operations:
+        print(operation)
 
 
 @main.command
