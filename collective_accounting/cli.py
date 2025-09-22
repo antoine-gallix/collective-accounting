@@ -5,7 +5,12 @@ import click
 from rich import print
 from rich.live import Live
 
-from .display import build_ledger_view, file_modification_timestamp, make_state_view
+from .display import (
+    build_ledger_view,
+    file_modification_timestamp,
+    make_operation_view,
+    make_state_view,
+)
 from .ledger import Ledger
 from .logging import logger
 
@@ -56,8 +61,7 @@ def accounts(color):
 def operations():
     """List operations"""
     ledger = Ledger.load_from_file()
-    for operation in ledger.operations:
-        print(operation)
+    print(make_operation_view(ledger))
 
 
 @main.command
