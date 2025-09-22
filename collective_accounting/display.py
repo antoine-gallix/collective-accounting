@@ -160,6 +160,10 @@ def style_text(text: str):
     return Text(text, style="yellow")
 
 
+def style_tag(text: str):
+    return Text(text, style="magenta")
+
+
 def describe_operation(operation) -> Text:
     match operation:
         case AddAccount():
@@ -170,15 +174,22 @@ def describe_operation(operation) -> Text:
             return Text("Add a common pot to the group")
         # --- money movement
         case SharedExpense():
-            return Text.assemble(
+            description = Text.assemble(
                 "",
                 style_name(operation.payer),
                 " pays ",
                 style_money(operation.amount),
                 " for ",
                 style_text(operation.subject),
-                (f" [{', '.join(operation.tags)}]" if operation.tags else ""),
             )
+            if operation.tags:
+                description += Text.assemble(
+                    " [",
+                    *funcy.interpose(", ", [style_tag(t) for t in operation.tags]),
+                    "]",
+                )
+
+            return description
         case Transfer():
             return Text.assemble(
                 Text()

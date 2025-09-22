@@ -87,7 +87,7 @@ def test__describe__SharedExpense__tags():
                 tags=("asset",),
             )
         ).markup
-        == "[blue]antoine[/blue] pays [green]100.00€[/green] for [yellow]kitchen tent[/yellow] \[asset]"
+        == "[blue]antoine[/blue] pays [green]100.00€[/green] for [yellow]kitchen tent[/yellow] [[magenta]asset[/magenta]]"
     )
     # two tags
     assert (
@@ -99,7 +99,7 @@ def test__describe__SharedExpense__tags():
                 tags=("asset", "kitchen"),
             )
         ).markup
-        == "[blue]antoine[/blue] pays [green]100.00€[/green] for [yellow]kitchen tent[/yellow] \[asset, kitchen]"
+        == "[blue]antoine[/blue] pays [green]100.00€[/green] for [yellow]kitchen tent[/yellow] [[magenta]asset[/magenta], [magenta]kitchen[/magenta]]"
     )
 
 
