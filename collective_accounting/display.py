@@ -171,12 +171,13 @@ def describe_operation(operation) -> Text:
         # --- money movement
         case SharedExpense():
             return Text.assemble(
-                Text(),
+                "",
                 style_name(operation.payer),
-                Text(" pays "),
+                " pays ",
                 style_money(operation.amount),
-                Text(" for "),
+                " for ",
                 style_text(operation.subject),
+                (f" [{', '.join(operation.tags)}]" if operation.tags else ""),
             )
         case Transfer():
             return Text.assemble(

@@ -76,6 +76,33 @@ def test__describe__SharedExpense():
     )
 
 
+def test__describe__SharedExpense__tags():
+    # one tag
+    assert (
+        describe_operation(
+            SharedExpense(
+                amount=Money(100),
+                payer="antoine",
+                subject="kitchen tent",
+                tags=("asset",),
+            )
+        ).markup
+        == "[blue]antoine[/blue] pays [green]100.00€[/green] for [yellow]kitchen tent[/yellow] \[asset]"
+    )
+    # two tags
+    assert (
+        describe_operation(
+            SharedExpense(
+                amount=Money(100),
+                payer="antoine",
+                subject="kitchen tent",
+                tags=("asset", "kitchen"),
+            )
+        ).markup
+        == "[blue]antoine[/blue] pays [green]100.00€[/green] for [yellow]kitchen tent[/yellow] \[asset, kitchen]"
+    )
+
+
 def test__describe__Transfer():
     assert (
         describe_operation(
