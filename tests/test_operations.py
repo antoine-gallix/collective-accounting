@@ -147,6 +147,24 @@ def test__SharedExpense_with_pot(state_with_pot):
     }
 
 
+def test__SharedExpense__tags():
+    no_tag = SharedExpense(
+        amount=Money(100), payer="antoine", subject="bribe authorities"
+    )
+    assert no_tag.tags == ()
+    one_tag = SharedExpense(
+        amount=Money(100), payer="antoine", subject="renting a van", tags=("transport",)
+    )
+    assert one_tag.tags == ("transport",)
+    one_tag = SharedExpense(
+        amount=Money(200),
+        payer="antoine",
+        subject="kitchen tent",
+        tags=("asset", "kitchen"),
+    )
+    assert one_tag.tags == ("asset", "kitchen")
+
+
 def test__Transfer(state):
     operation = Transfer(amount=Money(100), sender="baptiste", receiver="antoine")
     operation.apply_to(state)

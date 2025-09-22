@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .account import LedgerState, Name
 from .money import Money
@@ -102,6 +102,7 @@ class SharedExpense(AccountingOperation):
     amount: Money
     payer: Name
     subject: str
+    tags: tuple = field(default_factory=tuple)
 
     def apply_to(self, state: LedgerState):
         state.change_balance(self.payer, amount=-self.amount)
