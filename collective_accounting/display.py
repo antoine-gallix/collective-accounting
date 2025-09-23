@@ -266,9 +266,9 @@ def make_summary_view(ledger):
     return table
 
 
-def make_operation_view(ledger) -> Table:
+def make_operation_table(operations):
     table = Table.grid(padding=(0, 2))
-    for i, operation in reversed(list(enumerate(ledger.operations, start=1))):
+    for i, operation in reversed(list(enumerate(operations, start=1))):
         table.add_row(
             str(i),
             style_operation_name(operation),
@@ -324,7 +324,7 @@ def build_ledger_view():
     )
     screen.get("right").update(  # type:ignore
         CenteredPanel(
-            make_operation_view(ledger),
+            make_operation_table(ledger.operations),
             title="operations",
             align_options={"vertical": "top"},
             panel_options={"padding": (1, 0)},

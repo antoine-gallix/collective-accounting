@@ -2,13 +2,14 @@ import time
 from operator import xor
 
 import click
+import funcy
 from rich import print
 from rich.live import Live
 
 from .display import (
     build_ledger_view,
     file_modification_timestamp,
-    make_operation_view,
+    make_operation_table,
     make_state_view,
 )
 from .ledger import Ledger
@@ -61,7 +62,17 @@ def accounts(color):
 def operations():
     """List operations"""
     ledger = Ledger.load_from_file()
-    print(make_operation_view(ledger))
+    print(make_operation_table(ledger.operations))
+
+
+@main.command
+@click.option("--tag", type=click.STRING)
+def expenses(tag):
+    """List expenses"""
+    expenses = Ledger.load_from_file().expenses
+    if tag:
+        expenses = funcy.lfilter(lambda o: tag in o.tags, expenses)
+    print(make_operation_table(expenses))
 
 
 @main.command
