@@ -74,21 +74,31 @@ def expenses(tag):
     """List expenses"""
     expenses = Ledger.load_from_file().expenses
     if tag:
-        expenses = funcy.lfilter(lambda o: tag in o.tags, expenses)
+        print(Text.assemble("tag filter: ", Text(tag, style="magenta")))
+    filtered_expenses = (
+        funcy.lfilter(lambda o: tag in o.tags, expenses) if tag else expenses
+    )
+    expense_count_text = Text.assemble("count: ", (str(len(filtered_expenses)), "blue"))
     if tag:
-        print(Text.assemble("tags: ", Text(tag, style="magenta")))
-    print(Text.assemble((str(len(expenses)), "blue"), " expenses"))
+        expense_count_text += Text.assemble("/", (str(len(expenses)), "green"))
+    print(Text.assemble(expense_count_text))
     print(
         Text.assemble(
             "total: ",
             (
-                str(sum(funcy.map(attrgetter("amount"), expenses), start=Money(0))),
+                # specifying null money for start avoids downcasting result to Decimal
+                str(
+                    sum(
+                        funcy.map(attrgetter("amount"), filtered_expenses),
+                        start=Money(0),
+                    )
+                ),
                 "blue",
             ),
         )
     )
     print(Rule())
-    print(make_operation_table(expenses))
+    print(make_operation_table(filtered_expenses))
 
 
 @main.command
