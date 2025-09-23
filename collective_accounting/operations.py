@@ -1,5 +1,9 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from operator import attrgetter
+from typing import Self
+
+import funcy
 
 from .account import LedgerState, Name
 from .money import Money
@@ -112,6 +116,17 @@ class SharedExpense(AccountingOperation):
             )
         else:
             state.create_debt(amount=self.amount, creditors=[self.payer], debitors=None)
+
+
+def sum_expenses(expenses: list[SharedExpense]) -> Money:
+    return sum(
+        funcy.map(attrgetter("amount"), expenses),
+        start=Money(0),
+    )
+
+
+def filter_expenses(expenses: list[SharedExpense], tag: str) -> list[SharedExpense]:
+    return funcy.lfilter(lambda o: tag in o.tags, expenses)
 
 
 @dataclass

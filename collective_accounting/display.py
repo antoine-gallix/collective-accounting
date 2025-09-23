@@ -26,6 +26,8 @@ from .operations import (
     SharedExpense,
     Transfer,
     TransferDebt,
+    filter_expenses,
+    sum_expenses,
 )
 
 
@@ -278,13 +280,6 @@ def make_operation_table(operations):
     return table
 
 
-def sum_expenses(expenses):
-    return sum(
-        funcy.map(attrgetter("amount"), expenses),
-        start=Money(0),
-    )
-
-
 def make_expense_summary(expenses):
     return Group(
         Text.assemble("count: ", (str(len(expenses)), "blue")),
@@ -299,8 +294,8 @@ def make_expense_summary(expenses):
     )
 
 
-def filter_expenses(expenses: list[SharedExpense], tag: str) -> list[SharedExpense]:
-    return funcy.lfilter(lambda o: tag in o.tags, expenses) if tag else expenses
+def make_expense_view(expenses):
+    return Group(make_expense_summary(expenses), make_operation_table(expenses))
 
 
 def make_relative_expense_summary(filtered_expenses, expenses):
@@ -318,6 +313,16 @@ def make_relative_expense_summary(filtered_expenses, expenses):
             "/",
             (str(sum_expenses(expenses)), "green"),
         ),
+    )
+
+
+def make_relative_expense_view(expenses, tag):
+    filtered_expenses = filter_expenses(expenses, tag)
+    return Group(
+        Text.assemble("tag filter: ", Text(tag, style="magenta")),
+        make_relative_expense_summary(filtered_expenses, expenses),
+        Rule(),
+        make_operation_table(filtered_expenses),
     )
 
 

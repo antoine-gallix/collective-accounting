@@ -10,14 +10,16 @@ from rich.text import Text
 from .display import (
     build_ledger_view,
     file_modification_timestamp,
-    filter_expenses,
     make_expense_summary,
+    make_expense_view,
     make_operation_table,
     make_relative_expense_summary,
+    make_relative_expense_view,
     make_state_view,
 )
 from .ledger import Ledger
 from .logging import logger
+from .operations import filter_expenses
 
 main = click.Group()
 
@@ -75,14 +77,9 @@ def expenses(tag):
     """List expenses"""
     expenses = Ledger.load_from_file().expenses
     if tag:
-        filtered_expenses = filter_expenses(expenses, tag)
-        print(Text.assemble("tag filter: ", Text(tag, style="magenta")))
-        print(make_relative_expense_summary(filtered_expenses, expenses))
-        print(Rule())
-        print(make_operation_table(filtered_expenses))
+        print(make_relative_expense_view(expenses, tag))
     else:
-        print(make_expense_summary(expenses))
-        print(make_operation_table(expenses))
+        print(make_expense_view(expenses))
 
 
 @main.command
