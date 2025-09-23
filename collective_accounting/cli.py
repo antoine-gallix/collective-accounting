@@ -8,14 +8,14 @@ from rich.rule import Rule
 from rich.text import Text
 
 from .display import (
-    build_ledger_view,
+    expense_summary,
     file_modification_timestamp,
-    make_expense_summary,
+    ledger_view,
     make_expense_view,
-    make_operation_table,
-    make_relative_expense_summary,
-    make_relative_expense_view,
-    make_state_view,
+    operation_table,
+    relative_expense_summary,
+    relative_expense_view,
+    state_view,
 )
 from .ledger import Ledger
 from .logging import logger
@@ -37,7 +37,7 @@ def watch():
     """Print the content of the ledger file"""
     logger.remove()
     last_timestamp = file_modification_timestamp(Ledger.LEDGER_FILE)
-    with Live(build_ledger_view(), screen=True) as live:
+    with Live(ledger_view(), screen=True) as live:
         while True:
             time.sleep(0.25)
             new_timestamp = file_modification_timestamp(Ledger.LEDGER_FILE)
@@ -46,7 +46,7 @@ def watch():
                 (last_timestamp and new_timestamp) and new_timestamp > last_timestamp
             ):
                 last_timestamp = new_timestamp
-                live.update(build_ledger_view())
+                live.update(ledger_view())
 
 
 @main.command
@@ -54,7 +54,7 @@ def watch():
 def accounts(color):
     """Print the state of the accounts"""
     if color:
-        print(make_state_view(Ledger.load_from_file()))
+        print(state_view(Ledger.load_from_file()))
     else:
         for name, account in sorted(
             Ledger.load_from_file().state.user_accounts.items(),
@@ -68,7 +68,7 @@ def accounts(color):
 def operations():
     """List operations"""
     ledger = Ledger.load_from_file()
-    print(make_operation_table(ledger.operations))
+    print(operation_table(ledger.operations))
 
 
 @main.command
@@ -77,7 +77,7 @@ def expenses(tag):
     """List expenses"""
     expenses = Ledger.load_from_file().expenses
     if tag:
-        print(make_relative_expense_view(expenses, tag))
+        print(relative_expense_view(expenses, tag))
     else:
         print(make_expense_view(expenses))
 

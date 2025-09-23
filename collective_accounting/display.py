@@ -1,5 +1,4 @@
 import pathlib
-from operator import attrgetter
 
 import arrow
 import funcy
@@ -45,7 +44,7 @@ def format_timestamp(timestamp) -> str:
     return arrow.get(timestamp).to("local").format("YYYY-MM-DD HH:mm:ss")
 
 
-def make_file_info_view(ledger):
+def file_info_view(ledger):
     file_path = Ledger.LEDGER_FILE
     return Columns(
         (
@@ -65,7 +64,7 @@ def make_file_info_view(ledger):
     )
 
 
-def format_diff(balance) -> Text:
+def diff_style(balance) -> Text:
     balance_float = float(balance)
     if balance_float > 0:
         return Text(format(balance, "+"), style="green")
@@ -75,14 +74,14 @@ def format_diff(balance) -> Text:
         return Text(str(balance), style="blue")
 
 
-def make_diff_display(ledger, name):
-    return Text(name) + ":" + format_diff(ledger.state[name].diff)
+def diff_display(ledger, name):
+    return Text(name) + ":" + diff_style(ledger.state[name].diff)
 
 
-def make_pot_state(ledger):
+def pot_state_table(ledger):
     table = Table.grid(padding=(0, 2), expand=True)
     table.add_row("Pot Balance", Text(str(ledger.state.pot.balance), style="blue"))
-    table.add_row("Pot Diff", format_diff(ledger.state.pot.diff))
+    table.add_row("Pot Diff", diff_style(ledger.state.pot.diff))
 
     if (pot_expected_balance := ledger.state.pot.balance + ledger.state.pot.diff) < 0:
         table.add_row(
@@ -99,29 +98,29 @@ def make_pot_state(ledger):
     return table
 
 
-def make_accounts_table(ledger):
+def accounts_table(ledger):
     table = Table.grid(padding=(0, 2), expand=True)
     for name, account in sorted(
         ledger.state.user_accounts.items(),
         key=lambda item: item[1].diff,
         reverse=True,
     ):
-        table.add_row(name, format_diff(account.diff))
+        table.add_row(name, diff_style(account.diff))
     return table
 
 
-def make_state_view(ledger):
+def state_view(ledger):
     if ledger.state.has_pot:
         return Group(
-            make_pot_state(ledger),
+            pot_state_table(ledger),
             Rule(),
-            make_accounts_table(ledger),
+            accounts_table(ledger),
         )
     else:
-        return make_accounts_table(ledger)
+        return accounts_table(ledger)
 
 
-def style_operation_name(operation):
+def operation_name_style(operation):
     match operation:
         # --- edit accounts
         case AddAccount():
@@ -151,44 +150,44 @@ def style_operation_name(operation):
     return Text(operation.__class__.__name__, style=style)
 
 
-def style_name(name: Name):
+def name_display(name: Name):
     return Text(name, style="blue")
 
 
-def style_money(amount: Money):
+def money_display(amount: Money):
     return Text(str(amount), style="green")
 
 
-def style_text(text: str):
+def text_display(text: str):
     return Text(text, style="yellow")
 
 
-def style_tag(text: str):
+def tag_display(text: str):
     return Text(text, style="magenta")
 
 
-def describe_operation(operation) -> Text:
+def operation_description(operation) -> Text:
     match operation:
         case AddAccount():
-            return style_name(operation.name)
+            return name_display(operation.name)
         case RemoveAccount():
-            return style_name(operation.name)
+            return name_display(operation.name)
         case AddPot():
             return Text("Add a common pot to the group")
         # --- money movement
         case SharedExpense():
             description = Text.assemble(
                 "",
-                style_name(operation.payer),
+                name_display(operation.payer),
                 " pays ",
-                style_money(operation.amount),
+                money_display(operation.amount),
                 " for ",
-                style_text(operation.subject),
+                text_display(operation.subject),
             )
             if operation.tags:
                 description += Text.assemble(
                     " [",
-                    *funcy.interpose(", ", [style_tag(t) for t in operation.tags]),
+                    *funcy.interpose(", ", [tag_display(t) for t in operation.tags]),
                     "]",
                 )
 
@@ -196,60 +195,60 @@ def describe_operation(operation) -> Text:
         case Transfer():
             return Text.assemble(
                 Text()
-                + style_name(operation.sender)
+                + name_display(operation.sender)
                 + Text(" sends ")
-                + style_money(operation.amount)
+                + money_display(operation.amount)
                 + Text(" to ")
-                + style_name(operation.receiver),
+                + name_display(operation.receiver),
             )
         case Reimburse():
             return (
                 Text("Reimburse ")
-                + style_money(operation.amount)
+                + money_display(operation.amount)
                 + Text(" to ")
-                + style_name(operation.receiver)
+                + name_display(operation.receiver)
                 + Text(" from the pot")
             )
         case PaysContribution():
             return (
                 Text()
-                + style_name(operation.sender)
+                + name_display(operation.sender)
                 + Text(" contributes ")
-                + style_money(operation.amount)
+                + money_display(operation.amount)
                 + Text(" to the pot")
             )
         # --- debt movement
         case Debt():
             return (
                 Text()
-                + style_name(operation.debitor)
+                + name_display(operation.debitor)
                 + " owes "
-                + style_money(operation.amount)
+                + money_display(operation.amount)
                 + " to "
-                + style_name(operation.creditor)
+                + name_display(operation.creditor)
                 + " for "
-                + style_text(operation.subject)
+                + text_display(operation.subject)
             )
         case RequestContribution():
             return (
                 Text("Request contribution of ")
-                + style_money(operation.amount)
+                + money_display(operation.amount)
                 + Text(" from everyone")
             )
         case TransferDebt():
             return (
                 Text()
-                + style_name(operation.new_debitor)
+                + name_display(operation.new_debitor)
                 + Text(" covers ")
-                + style_money(operation.amount)
+                + money_display(operation.amount)
                 + Text(" of debt from ")
-                + style_name(operation.old_debitor)
+                + name_display(operation.old_debitor)
             )
         case _:
             return Text()
 
 
-def make_summary_view(ledger):
+def ledger_summary_view(ledger):
     table = Table.grid(padding=(0, 2))
     table.add_row("users", Text(str(len(ledger.state.user_accounts)), style="blue"))
     table.add_row(
@@ -269,18 +268,18 @@ def make_summary_view(ledger):
     return table
 
 
-def make_operation_table(operations):
+def operation_table(operations):
     table = Table.grid(padding=(0, 2))
     for i, operation in reversed(list(enumerate(operations, start=1))):
         table.add_row(
             str(i),
-            style_operation_name(operation),
-            describe_operation(operation),
+            operation_name_style(operation),
+            operation_description(operation),
         )
     return table
 
 
-def make_expense_summary(expenses):
+def expense_summary(expenses):
     return Group(
         Text.assemble("count: ", (str(len(expenses)), "blue")),
         Text.assemble(
@@ -295,10 +294,10 @@ def make_expense_summary(expenses):
 
 
 def make_expense_view(expenses):
-    return Group(make_expense_summary(expenses), make_operation_table(expenses))
+    return Group(expense_summary(expenses), operation_table(expenses))
 
 
-def make_relative_expense_summary(filtered_expenses, expenses):
+def relative_expense_summary(filtered_expenses, expenses):
     return Group(
         Text.assemble(
             "count: ",
@@ -316,13 +315,13 @@ def make_relative_expense_summary(filtered_expenses, expenses):
     )
 
 
-def make_relative_expense_view(expenses, tag):
+def relative_expense_view(expenses, tag):
     filtered_expenses = filter_expenses(expenses, tag)
     return Group(
         Text.assemble("tag filter: ", Text(tag, style="magenta")),
-        make_relative_expense_summary(filtered_expenses, expenses),
+        relative_expense_summary(filtered_expenses, expenses),
         Rule(),
-        make_operation_table(filtered_expenses),
+        operation_table(filtered_expenses),
     )
 
 
@@ -344,7 +343,7 @@ class CenteredPanel(Panel):
         )
 
 
-def build_ledger_view():
+def ledger_view():
     try:
         ledger = Ledger.load_from_file()
     except FileNotFoundError:
@@ -366,20 +365,20 @@ def build_ledger_view():
         Layout(name="summary", size=5), Layout(name="accounts")
     )
     screen.get("summary").update(  # type:ignore
-        CenteredPanel(make_summary_view(ledger), title="Summary")
+        CenteredPanel(ledger_summary_view(ledger), title="Summary")
     )
     screen.get("accounts").update(  # type:ignore
-        CenteredPanel(make_state_view(ledger), title="Accounts")
+        CenteredPanel(state_view(ledger), title="Accounts")
     )
     screen.get("right").update(  # type:ignore
         CenteredPanel(
-            make_operation_table(ledger.operations),
+            operation_table(ledger.operations),
             title="operations",
             align_options={"vertical": "top"},
             panel_options={"padding": (1, 0)},
         )
     )
     screen.get("footer").update(  # type:ignore
-        make_file_info_view(ledger)
+        file_info_view(ledger)
     )
     return screen

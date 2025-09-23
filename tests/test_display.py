@@ -1,7 +1,7 @@
 from collective_accounting.display import (
-    describe_operation,
     file_creation_timestamp,
     file_modification_timestamp,
+    operation_description,
 )
 from collective_accounting.money import Money
 from collective_accounting.operations import (
@@ -55,21 +55,23 @@ def test__creation_timestamp(tmp_path):
 
 
 def test__describe__AddAccount():
-    assert describe_operation(AddAccount("antoine")).markup == "[blue]antoine[/blue]"
+    assert operation_description(AddAccount("antoine")).markup == "[blue]antoine[/blue]"
 
 
 def test__describe__RemoveAccount():
-    assert describe_operation(RemoveAccount("antoine")).markup == "[blue]antoine[/blue]"
+    assert (
+        operation_description(RemoveAccount("antoine")).markup == "[blue]antoine[/blue]"
+    )
 
 
 def test__describe__AddPot():
-    assert describe_operation(AddPot()).markup == "Add a common pot to the group"
+    assert operation_description(AddPot()).markup == "Add a common pot to the group"
 
 
 # --- money movement
 def test__describe__SharedExpense():
     assert (
-        describe_operation(
+        operation_description(
             SharedExpense(amount=Money(100), payer="antoine", subject="renting a van")
         ).markup
         == "[blue]antoine[/blue] pays [green]100.00€[/green] for [yellow]renting a van[/yellow]"
@@ -79,7 +81,7 @@ def test__describe__SharedExpense():
 def test__describe__SharedExpense__tags():
     # one tag
     assert (
-        describe_operation(
+        operation_description(
             SharedExpense(
                 amount=Money(100),
                 payer="antoine",
@@ -91,7 +93,7 @@ def test__describe__SharedExpense__tags():
     )
     # two tags
     assert (
-        describe_operation(
+        operation_description(
             SharedExpense(
                 amount=Money(100),
                 payer="antoine",
@@ -105,7 +107,7 @@ def test__describe__SharedExpense__tags():
 
 def test__describe__Transfer():
     assert (
-        describe_operation(
+        operation_description(
             Transfer(amount=Money(100), sender="baptiste", receiver="antoine")
         ).markup
         == "[blue]baptiste[/blue] sends [green]100.00€[/green] to [blue]antoine[/blue]"
@@ -114,14 +116,16 @@ def test__describe__Transfer():
 
 def test__describe__Reimburse():
     assert (
-        describe_operation(Reimburse(Money(50), "antoine")).markup
+        operation_description(Reimburse(Money(50), "antoine")).markup
         == "Reimburse [green]50.00€[/green] to [blue]antoine[/blue] from the pot"
     )
 
 
 def test__describe__PaysContribution():
     assert (
-        describe_operation(PaysContribution(amount=Money(100), sender="antoine")).markup
+        operation_description(
+            PaysContribution(amount=Money(100), sender="antoine")
+        ).markup
         == "[blue]antoine[/blue] contributes [green]100.00€[/green] to the pot"
     )
 
@@ -129,7 +133,7 @@ def test__describe__PaysContribution():
 # --- debt movement
 def test__describe__Debt():
     assert (
-        describe_operation(
+        operation_description(
             Debt(amount=Money(10), debitor="renan", creditor="antoine", subject="lunch")
         ).markup
         == "[blue]renan[/blue] owes [green]10.00€[/green] to [blue]antoine[/blue] for [yellow]lunch[/yellow]"
@@ -138,14 +142,14 @@ def test__describe__Debt():
 
 def test__describe__RequestContribution():
     assert (
-        describe_operation(RequestContribution(Money(100))).markup
+        operation_description(RequestContribution(Money(100))).markup
         == "Request contribution of [green]100.00€[/green] from everyone"
     )
 
 
 def test__describe__TransferDebt():
     assert (
-        describe_operation(
+        operation_description(
             TransferDebt(amount=Money(100), old_debitor="baptiste", new_debitor="renan")
         ).markup
         == "[blue]renan[/blue] covers [green]100.00€[/green] of debt from [blue]baptiste[/blue]"
