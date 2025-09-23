@@ -1,8 +1,7 @@
 import time
-from operator import attrgetter, xor
+from operator import xor
 
 import click
-import funcy
 from rich import print
 from rich.live import Live
 from rich.rule import Rule
@@ -11,12 +10,14 @@ from rich.text import Text
 from .display import (
     build_ledger_view,
     file_modification_timestamp,
+    filter_expenses,
+    make_expense_summary,
     make_operation_table,
+    make_relative_expense_summary,
     make_state_view,
 )
 from .ledger import Ledger
 from .logging import logger
-from .money import Money
 
 main = click.Group()
 
@@ -74,31 +75,14 @@ def expenses(tag):
     """List expenses"""
     expenses = Ledger.load_from_file().expenses
     if tag:
+        filtered_expenses = filter_expenses(expenses, tag)
         print(Text.assemble("tag filter: ", Text(tag, style="magenta")))
-    filtered_expenses = (
-        funcy.lfilter(lambda o: tag in o.tags, expenses) if tag else expenses
-    )
-    expense_count_text = Text.assemble("count: ", (str(len(filtered_expenses)), "blue"))
-    if tag:
-        expense_count_text += Text.assemble("/", (str(len(expenses)), "green"))
-    print(Text.assemble(expense_count_text))
-    print(
-        Text.assemble(
-            "total: ",
-            (
-                # specifying null money for start avoids downcasting result to Decimal
-                str(
-                    sum(
-                        funcy.map(attrgetter("amount"), filtered_expenses),
-                        start=Money(0),
-                    )
-                ),
-                "blue",
-            ),
-        )
-    )
-    print(Rule())
-    print(make_operation_table(filtered_expenses))
+        print(make_relative_expense_summary(filtered_expenses, expenses))
+        print(Rule())
+        print(make_operation_table(filtered_expenses))
+    else:
+        print(make_expense_summary(expenses))
+        print(make_operation_table(expenses))
 
 
 @main.command

@@ -1,4 +1,5 @@
 import pathlib
+from operator import attrgetter
 
 import arrow
 import funcy
@@ -275,6 +276,49 @@ def make_operation_table(operations):
             describe_operation(operation),
         )
     return table
+
+
+def sum_expenses(expenses):
+    return sum(
+        funcy.map(attrgetter("amount"), expenses),
+        start=Money(0),
+    )
+
+
+def make_expense_summary(expenses):
+    return Group(
+        Text.assemble("count: ", (str(len(expenses)), "blue")),
+        Text.assemble(
+            "total: ",
+            (
+                # specifying null money for start avoids downcasting result to Decimal
+                str(sum_expenses(expenses)),
+                "blue",
+            ),
+        ),
+    )
+
+
+def filter_expenses(expenses: list[SharedExpense], tag: str) -> list[SharedExpense]:
+    return funcy.lfilter(lambda o: tag in o.tags, expenses) if tag else expenses
+
+
+def make_relative_expense_summary(filtered_expenses, expenses):
+    return Group(
+        Text.assemble(
+            "count: ",
+            (str(len(filtered_expenses)), "blue"),
+            "/",
+            (str(len(expenses)), "green"),
+        ),
+        Text.assemble(
+            "total: ",
+            "count: ",
+            (str(sum_expenses(filtered_expenses)), "blue"),
+            "/",
+            (str(sum_expenses(expenses)), "green"),
+        ),
+    )
 
 
 class CenteredPanel(Panel):
