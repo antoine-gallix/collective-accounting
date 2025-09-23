@@ -243,7 +243,7 @@ def describe_operation(operation) -> Text:
                 + style_name(operation.old_debitor)
             )
         case _:
-            return ""
+            return Text()
 
 
 def make_summary_view(ledger):
