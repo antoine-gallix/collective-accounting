@@ -1,10 +1,12 @@
 import time
-from operator import xor
+from operator import attrgetter, xor
 
 import click
 import funcy
 from rich import print
 from rich.live import Live
+from rich.rule import Rule
+from rich.text import Text
 
 from .display import (
     build_ledger_view,
@@ -14,6 +16,7 @@ from .display import (
 )
 from .ledger import Ledger
 from .logging import logger
+from .money import Money
 
 main = click.Group()
 
@@ -72,6 +75,19 @@ def expenses(tag):
     expenses = Ledger.load_from_file().expenses
     if tag:
         expenses = funcy.lfilter(lambda o: tag in o.tags, expenses)
+    if tag:
+        print(Text.assemble("tags: ", Text(tag, style="magenta")))
+    print(Text.assemble((str(len(expenses)), "blue"), " expenses"))
+    print(
+        Text.assemble(
+            "total: ",
+            (
+                str(sum(funcy.map(attrgetter("amount"), expenses), start=Money(0))),
+                "blue",
+            ),
+        )
+    )
+    print(Rule())
     print(make_operation_table(expenses))
 
 
