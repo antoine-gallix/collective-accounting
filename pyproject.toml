@@ -22,6 +22,9 @@ accountant = "lausa.cli:main"
 [tool.uv]
 package = true # required for scripts to be installed
 
+[tool.setuptools]
+packages = ["lausa"]
+
 [tool.bumpversion]
 current_version = "0.8.0"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
