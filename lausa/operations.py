@@ -132,6 +132,10 @@ class Expenses(UserList[SharedExpense]):
         else:
             return self.__class__(funcy.lfilter(lambda o: tag in o.tags, self))
 
+    def tags(self, unique=True) -> list[str]:
+        tags = funcy.flatten(expense.tags for expense in self)
+        return list(set(tags)) if unique else list(tags)
+
 
 @dataclass
 class Transfer(AccountingOperation):

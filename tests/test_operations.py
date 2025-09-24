@@ -265,3 +265,15 @@ def test__Expenses__filter(expenses):
     assert expenses.filter(None) == [
         SharedExpense(amount=Money(20), payer="antoine", subject="pimientos"),
     ]
+
+
+def test__Expenses__tag(expenses):
+    assert expenses.tags() == [
+        "meat",
+        "animal",
+    ]
+    assert expenses.tags(unique=False) == [
+        "meat",
+        "animal",
+        "animal",
+    ]
