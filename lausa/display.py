@@ -25,8 +25,6 @@ from .operations import (
     SharedExpense,
     Transfer,
     TransferDebt,
-    filter_expenses,
-    sum_expenses,
 )
 
 
@@ -308,7 +306,7 @@ def expense_summary(expenses):
             "total: ",
             (
                 # specifying null money for start avoids downcasting result to Decimal
-                str(sum_expenses(expenses)),
+                str(expenses.sum()),
                 "blue",
             ),
         ),
@@ -330,15 +328,15 @@ def relative_expense_summary(filtered_expenses, expenses):
         Text.assemble(
             "total: ",
             "count: ",
-            (str(sum_expenses(filtered_expenses)), "blue"),
+            (str(filtered_expenses.sum()), "blue"),
             "/",
-            (str(sum_expenses(expenses)), "green"),
+            (str(expenses.sum()), "green"),
         ),
     )
 
 
 def relative_expense_view(expenses, tag):
-    filtered_expenses = filter_expenses(expenses, tag)
+    filtered_expenses = expenses.filter(tag)
     return Group(
         Text.assemble(
             "tag filter: ", Text("no tag" if tag is None else tag, style="magenta")

@@ -15,6 +15,7 @@ from .operations import (
     AddAccount,
     AddPot,
     Debt,
+    Expenses,
     Operation,
     PaysContribution,
     Reimburse,
@@ -41,19 +42,21 @@ class Ledger:
         return f"{self.__class__.__name__}(<{self._repr_string!r}>)"
 
     @property
-    def state(self):
+    def state(self) -> LedgerState:
         if not self.records:
             return LedgerState()
         else:
             return self.records[-1].state
 
     @property
-    def operations(self):
+    def operations(self) -> list[Operation]:
         return [record.operation for record in self.records]
 
     @property
-    def expenses(self):
-        return funcy.lfilter(funcy.rpartial(isinstance, SharedExpense), self.operations)
+    def expenses(self) -> Expenses:
+        return Expenses(
+            funcy.lfilter(funcy.rpartial(isinstance, SharedExpense), self.operations)
+        )
 
     # ------------------------ IOs ------------------------
 

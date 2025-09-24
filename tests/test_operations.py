@@ -6,6 +6,7 @@ from lausa.operations import (
     AddAccount,
     AddPot,
     Debt,
+    Expenses,
     PaysContribution,
     Reimburse,
     RemoveAccount,
@@ -208,3 +209,59 @@ def test__operation__PaysContribution__no_pot(state):
     operation = PaysContribution(amount=Money(100), sender="antoine")
     with raises(RuntimeError):
         assert operation.apply_to(state)
+
+
+# ------------------------ Expenses ------------------------
+
+
+@fixture
+def expenses():
+    return Expenses(
+        [
+            SharedExpense(
+                amount=Money(10),
+                payer="renan",
+                subject="salchichas",
+                tags=("meat", "animal"),
+            ),
+            SharedExpense(amount=Money(20), payer="antoine", subject="pimientos"),
+            SharedExpense(
+                amount=Money(30),
+                payer="baptiste",
+                subject="huevos",
+                tags=("animal",),
+            ),
+        ]
+    )
+
+
+def test__Expenses__sum(expenses):
+    assert expenses.sum() == Money(60)
+
+
+def test__Expenses__filter(expenses):
+    assert expenses.filter("meat") == [
+        SharedExpense(
+            amount=Money(10),
+            payer="renan",
+            subject="salchichas",
+            tags=("meat", "animal"),
+        ),
+    ]
+    assert expenses.filter("animal") == [
+        SharedExpense(
+            amount=Money(10),
+            payer="renan",
+            subject="salchichas",
+            tags=("meat", "animal"),
+        ),
+        SharedExpense(
+            amount=Money(30),
+            payer="baptiste",
+            subject="huevos",
+            tags=("animal",),
+        ),
+    ]
+    assert expenses.filter(None) == [
+        SharedExpense(amount=Money(20), payer="antoine", subject="pimientos"),
+    ]

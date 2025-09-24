@@ -10,6 +10,7 @@ from lausa.operations import (
     AddAccount,
     AddPot,
     Debt,
+    Expenses,
     PaysContribution,
     Reimburse,
     RequestContribution,
@@ -55,6 +56,8 @@ def test__Ledger__scenario__populate_ledger():
 
 def test__Ledger__scenario__shared_expense(ledger):
     ledger.record_shared_expense(amount=125, name="antoine", subject="potatoes")
+    ledger.record_shared_expense(amount=30, name="baptiste", subject="choucroute")
+    ledger.record_shared_expense(amount=3, name="renan", subject="salt")
     ledger.record_transfer(
         amount=30,
         sender="baptiste",
@@ -73,6 +76,18 @@ def test__Ledger__scenario__shared_expense(ledger):
             payer="antoine",
             subject="potatoes",
         ),
+        SharedExpense(
+            amount=Money("30.00"),
+            payer="baptiste",
+            subject="choucroute",
+            tags=(),
+        ),
+        SharedExpense(
+            amount=Money("3.00"),
+            payer="renan",
+            subject="salt",
+            tags=(),
+        ),
         Transfer(
             amount=Money("30.00"),
             sender="baptiste",
@@ -90,10 +105,31 @@ def test__Ledger__scenario__shared_expense(ledger):
             subject="lunch at baustelle",
         ),
     ]
+    assert ledger.expenses == Expenses(
+        [
+            SharedExpense(
+                amount=Money("125.00"),
+                payer="antoine",
+                subject="potatoes",
+            ),
+            SharedExpense(
+                amount=Money("30.00"),
+                payer="baptiste",
+                subject="choucroute",
+                tags=(),
+            ),
+            SharedExpense(
+                amount=Money("3.00"),
+                payer="renan",
+                subject="salt",
+                tags=(),
+            ),
+        ]
+    )
     assert ledger.state == {
-        "antoine": Account(balance=Money("-95.00"), diff=Money("53.34")),
-        "baptiste": Account(balance=Money("-30.00"), diff=Money("-21.67")),
-        "renan": Account(balance=Money("0.00"), diff=Money("-31.67")),
+        "antoine": Account(balance=Money("-95.00"), diff=Money("42.34")),
+        "baptiste": Account(balance=Money("-60.00"), diff=Money("-2.67")),
+        "renan": Account(balance=Money("-3.00"), diff=Money("-39.67")),
     }
 
 

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from collections import UserList
 from dataclasses import dataclass, field
 from operator import attrgetter
 from typing import Self
@@ -118,20 +119,18 @@ class SharedExpense(AccountingOperation):
             state.create_debt(amount=self.amount, creditors=[self.payer], debitors=None)
 
 
-def sum_expenses(expenses: list[SharedExpense]) -> Money:
-    return sum(
-        funcy.map(attrgetter("amount"), expenses),
-        start=Money(0),
-    )
+class Expenses(UserList[SharedExpense]):
+    def sum(self) -> Money:
+        return sum(
+            funcy.map(attrgetter("amount"), self),
+            start=Money(0),
+        )
 
-
-def filter_expenses(
-    expenses: list[SharedExpense], tag: str | None
-) -> list[SharedExpense]:
-    if tag is None:
-        return funcy.lfilter(lambda o: o.tags == tuple(), expenses)
-    else:
-        return funcy.lfilter(lambda o: tag in o.tags, expenses)
+    def filter(self, tag: str | None) -> Self:
+        if tag is None:
+            return self.__class__(funcy.lfilter(lambda o: o.tags == tuple(), self))
+        else:
+            return self.__class__(funcy.lfilter(lambda o: tag in o.tags, self))
 
 
 @dataclass
