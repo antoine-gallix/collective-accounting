@@ -35,6 +35,10 @@ class LedgerRecord:
 class Ledger:
     records: list[LedgerRecord] = field(default_factory=list)
     LEDGER_FILE = "ledger.yml"
+    _repr_string = "in-memory"
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(<{self._repr_string!r}>)"
 
     @property
     def state(self):
@@ -61,6 +65,7 @@ class Ledger:
                 sort_keys=False,
             )
         )
+        self._repr_string = self.LEDGER_FILE
 
     @classmethod
     def load_from_file(cls) -> Self:
@@ -75,6 +80,7 @@ class Ledger:
             logger.debug(f"apply operation: {operation}")
             ledger.apply(operation)
         logger.debug("ledger loaded")
+        ledger._repr_string = ledger.LEDGER_FILE
         return ledger
 
     @classmethod
