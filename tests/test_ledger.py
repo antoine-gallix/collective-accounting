@@ -3,10 +3,10 @@ from textwrap import dedent
 
 from pytest import fixture
 
-from collective_accounting.account import Account, PositiveAccount
-from collective_accounting.ledger import Ledger
-from collective_accounting.money import Money
-from collective_accounting.operations import (
+from lausa.account import Account, PositiveAccount
+from lausa.ledger import Ledger
+from lausa.money import Money
+from lausa.operations import (
     AddAccount,
     AddPot,
     Debt,

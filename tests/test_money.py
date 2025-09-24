@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from collective_accounting.money import (
+from lausa.money import (
     Money,
 )
 

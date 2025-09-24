@@ -1,6 +1,6 @@
-from collective_accounting.io import load_operation_from_dict, operation_as_dict
-from collective_accounting.money import Money
-from collective_accounting.operations import (
+from lausa.io import load_operation_from_dict, operation_as_dict
+from lausa.money import Money
+from lausa.operations import (
     AddAccount,
     AddPot,
     Debt,

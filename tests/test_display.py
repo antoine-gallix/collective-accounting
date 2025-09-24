@@ -1,10 +1,10 @@
-from collective_accounting.display import (
+from lausa.display import (
     file_creation_timestamp,
     file_modification_timestamp,
     operation_description,
 )
-from collective_accounting.money import Money
-from collective_accounting.operations import (
+from lausa.money import Money
+from lausa.operations import (
     AddAccount,
     AddPot,
     Debt,

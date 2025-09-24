@@ -1,5 +1,5 @@
 [project]
-name = "collective_accounting"
+name = "lausa"
 version = "0.8.0"
 description = "Ledger for collective accounting"
 readme = "README.md"
@@ -17,7 +17,7 @@ dependencies = [
 dev = ["pytest>=8.4.1", "pytest-mock>=3.14.1"]
 
 [project.scripts]
-accountant = "collective_accounting.cli:main"
+accountant = "lausa.cli:main"
 
 [tool.uv]
 package = true # required for scripts to be installed

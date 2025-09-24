@@ -1,8 +1,8 @@
 from pytest import fixture, raises
 
-from collective_accounting.account import Account, LedgerState, PositiveAccount
-from collective_accounting.money import Money
-from collective_accounting.operations import (
+from lausa.account import Account, LedgerState, PositiveAccount
+from lausa.money import Money
+from lausa.operations import (
     AddAccount,
     AddPot,
     Debt,
