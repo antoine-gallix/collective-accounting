@@ -166,6 +166,10 @@ def tag_display(text: str):
     return Text(text, style="magenta")
 
 
+def tags_display(tags):
+    return Text.assemble("", *funcy.interpose(", ", [tag_display(t) for t in tags]))
+
+
 def operation_description(operation) -> Text:
     match operation:
         case AddAccount():
@@ -187,7 +191,7 @@ def operation_description(operation) -> Text:
             if operation.tags:
                 description += Text.assemble(
                     " [",
-                    *funcy.interpose(", ", [tag_display(t) for t in operation.tags]),
+                    tags_display(operation.tags),
                     "]",
                 )
 
@@ -279,6 +283,22 @@ def operation_table(operations):
     return table
 
 
+def expense_table(expenses: list[SharedExpense]):
+    table = Table()
+    table.add_column("payer")
+    table.add_column("amount")
+    table.add_column("subject")
+    table.add_column("tags")
+    for expense in reversed(expenses):
+        table.add_row(
+            name_display(expense.payer),
+            money_display(expense.amount),
+            expense.subject,
+            tags_display(expense.tags),
+        )
+    return table
+
+
 def expense_summary(expenses):
     return Group(
         Text.assemble("count: ", (str(len(expenses)), "blue")),
@@ -293,8 +313,8 @@ def expense_summary(expenses):
     )
 
 
-def make_expense_view(expenses):
-    return Group(expense_summary(expenses), operation_table(expenses))
+def expense_view(expenses):
+    return Group(expense_summary(expenses), Rule(), expense_table(expenses))
 
 
 def relative_expense_summary(filtered_expenses, expenses):
@@ -321,7 +341,7 @@ def relative_expense_view(expenses, tag):
         Text.assemble("tag filter: ", Text(tag, style="magenta")),
         relative_expense_summary(filtered_expenses, expenses),
         Rule(),
-        operation_table(filtered_expenses),
+        expense_table(filtered_expenses),
     )
 
 

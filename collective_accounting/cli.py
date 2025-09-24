@@ -9,9 +9,9 @@ from rich.text import Text
 
 from .display import (
     expense_summary,
+    expense_view,
     file_modification_timestamp,
     ledger_view,
-    make_expense_view,
     operation_table,
     relative_expense_summary,
     relative_expense_view,
@@ -79,7 +79,7 @@ def expenses(tag):
     if tag:
         print(relative_expense_view(expenses, tag))
     else:
-        print(make_expense_view(expenses))
+        print(expense_view(expenses))
 
 
 @main.command
