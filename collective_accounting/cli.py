@@ -69,7 +69,10 @@ def operations():
 @main.command
 @click.option("--tag", type=click.STRING)
 def expenses(tag):
-    """List expenses"""
+    """List expenses
+
+    tag: to look for in expenses tags. "none" matches expenses without tags.
+    """
     expenses = Ledger.load_from_file().expenses
     if tag is not None:
         if tag == "none":
