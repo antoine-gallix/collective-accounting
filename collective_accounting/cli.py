@@ -71,7 +71,9 @@ def operations():
 def expenses(tag):
     """List expenses"""
     expenses = Ledger.load_from_file().expenses
-    if tag:
+    if tag is not None:
+        if tag == "none":
+            tag = None
         print(relative_expense_view(expenses, tag))
     else:
         print(expense_view(expenses))

@@ -284,6 +284,8 @@ def operation_table(operations):
 
 
 def expense_table(expenses: list[SharedExpense]):
+    if not expenses:
+        return Text("no expense to display", style="red")
     table = Table()
     table.add_column("payer")
     table.add_column("amount")
@@ -338,7 +340,9 @@ def relative_expense_summary(filtered_expenses, expenses):
 def relative_expense_view(expenses, tag):
     filtered_expenses = filter_expenses(expenses, tag)
     return Group(
-        Text.assemble("tag filter: ", Text(tag, style="magenta")),
+        Text.assemble(
+            "tag filter: ", Text("no tag" if tag is None else tag, style="magenta")
+        ),
         relative_expense_summary(filtered_expenses, expenses),
         Rule(),
         expense_table(filtered_expenses),

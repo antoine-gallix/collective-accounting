@@ -125,8 +125,13 @@ def sum_expenses(expenses: list[SharedExpense]) -> Money:
     )
 
 
-def filter_expenses(expenses: list[SharedExpense], tag: str) -> list[SharedExpense]:
-    return funcy.lfilter(lambda o: tag in o.tags, expenses)
+def filter_expenses(
+    expenses: list[SharedExpense], tag: str | None
+) -> list[SharedExpense]:
+    if tag is None:
+        return funcy.lfilter(lambda o: o.tags == tuple(), expenses)
+    else:
+        return funcy.lfilter(lambda o: tag in o.tags, expenses)
 
 
 @dataclass
