@@ -4,22 +4,17 @@ from operator import xor
 import click
 from rich import print
 from rich.live import Live
-from rich.rule import Rule
-from rich.text import Text
 
 from .display import (
-    expense_summary,
     expense_view,
     file_modification_timestamp,
     ledger_view,
     operation_table,
-    relative_expense_summary,
     relative_expense_view,
     state_view,
 )
 from .ledger import Ledger
 from .logging import logger
-from .operations import filter_expenses
 
 main = click.Group()
 
