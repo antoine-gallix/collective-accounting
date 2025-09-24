@@ -3,7 +3,7 @@ from operator import attrgetter
 
 import funcy
 
-from collective_accounting import operations
+from lausa import operations
 
 
 def module_objects(module):
