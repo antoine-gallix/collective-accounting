@@ -66,17 +66,23 @@ def operations():
     print(operation_table(ledger.operations))
 
 
-@main.command
+@main.group
+def expenses(): ...
+
+
+@expenses.command("list")
 @click.option("--tag", type=click.STRING)
-def expenses(tag):
+@click.option("--no-tag", is_flag=True)
+def list_expenses(tag, no_tag):
     """List expenses
 
-    tag: to look for in expenses tags. "none" matches expenses without tags.
+    TAG: select expenses with specified TAG
+    NO_TAG: select expenses with no tag. overrides TAG option
     """
     expenses = Ledger.load_from_file().expenses
-    if tag is not None:
-        if tag == "none":
-            tag = None
+    if no_tag:
+        print(relative_expense_view(expenses, None))
+    elif tag is not None:
         print(relative_expense_view(expenses, tag))
     else:
         print(expense_view(expenses))
