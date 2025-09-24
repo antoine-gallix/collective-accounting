@@ -15,7 +15,7 @@ class Money(Decimal):
         return super().__new__(cls, Decimal(number).quantize(Decimal("0.01")))
 
     def __repr__(self):
-        return f"{self.__class__.__name__}('{self}')"
+        return f"{self.__class__.__name__}('{super().__str__()}')"
 
     def __str__(self):
         return super().__str__() + self.CURRENCY

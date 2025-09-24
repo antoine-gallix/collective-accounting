@@ -19,6 +19,11 @@ def test__Money__str():
     assert str(Money(-3.5)) == "-3.50€"
 
 
+def test__Money__repr():
+    assert repr(Money(3.5)) == "Money('3.50')"
+    assert repr(Money(-3.5)) == "Money('-3.50')"
+
+
 def test__Money__format():
     assert f"{Money(3.5)}" == "3.50€"
     assert f"{Money(3.5):+}" == "+3.50€"
