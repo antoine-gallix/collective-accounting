@@ -1,3 +1,5 @@
+    escrivèm nòstras despensas sus una lausa; los bon comptes fan los bons amics.
+
 # collective-accounting
 
 CLI tool for group accounting. Maintain a ledger that tracks balances between accounts. This is intended to be used in a collective where members advance money to buy things for the group. The ledger keeps track of who owes and who is owed money so counts can be setteled later.
