@@ -88,6 +88,9 @@ def list_expenses(tag, no_tag):
         print(expense_view(expenses))
 
 
+# ------------------------ operations ------------------------
+
+
 @main.command
 @click.option("--index", type=click.INT)
 def undo(index):
@@ -102,9 +105,6 @@ def undo(index):
             ledger.records.pop(index - 1)
         else:
             ledger.records.pop()
-
-
-# ------------------------ operations ------------------------
 
 
 @main.group
