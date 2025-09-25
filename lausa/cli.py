@@ -88,6 +88,14 @@ def list_expenses(tag, no_tag):
         print(expense_view(expenses))
 
 
+@expenses.command("tags")
+def list_tags():
+    """List tags found in ledger expenses"""
+    expenses = Ledger.load_from_file().expenses
+    for tag in expenses.tags():
+        print(tag)
+
+
 # ------------------------ operations ------------------------
 
 
