@@ -1,0 +1,572 @@
+operation: AddAccount
+name: finn
+---
+operation: AddAccount
+name: sam
+---
+operation: AddAccount
+name: tessa
+---
+operation: AddAccount
+name: antoine
+---
+operation: AddAccount
+name: baptiste
+---
+operation: AddAccount
+name: clara
+---
+operation: AddAccount
+name: torben
+---
+operation: AddAccount
+name: kriti
+---
+operation: AddAccount
+name: scinti
+---
+operation: AddAccount
+name: madeleine
+---
+operation: AddAccount
+name: bairak
+---
+operation: AddAccount
+name: kate
+---
+operation: AddAccount
+name: renan
+---
+operation: AddAccount
+name: tara
+---
+operation: AddAccount
+name: elias
+---
+operation: AddAccount
+name: wolf
+---
+operation: AddAccount
+name: helena
+---
+operation: AddAccount
+name: parisa
+---
+operation: AddAccount
+name: nikolas
+---
+operation: AddAccount
+name: merve
+---
+operation: AddAccount
+name: najmeh
+---
+operation: AddAccount
+name: ben
+---
+operation: AddPot
+---
+operation: RequestContribution
+amount: 100.0
+---
+operation: PaysContribution
+amount: 100.0
+sender: sam
+---
+operation: PaysContribution
+amount: 100.0
+sender: tessa
+---
+operation: PaysContribution
+amount: 100.0
+sender: antoine
+---
+operation: PaysContribution
+amount: 100.0
+sender: baptiste
+---
+operation: PaysContribution
+amount: 100.0
+sender: clara
+---
+operation: PaysContribution
+amount: 100.0
+sender: torben
+---
+operation: PaysContribution
+amount: 100.0
+sender: scinti
+---
+operation: PaysContribution
+amount: 100.0
+sender: madeleine
+---
+operation: PaysContribution
+amount: 100.0
+sender: bairak
+---
+operation: PaysContribution
+amount: 100.0
+sender: kate
+---
+operation: PaysContribution
+amount: 100.0
+sender: renan
+---
+operation: PaysContribution
+amount: 100.0
+sender: tara
+---
+operation: PaysContribution
+amount: 100.0
+sender: elias
+---
+operation: PaysContribution
+amount: 100.0
+sender: wolf
+---
+operation: PaysContribution
+amount: 100.0
+sender: helena
+---
+operation: PaysContribution
+amount: 100.0
+sender: parisa
+---
+operation: PaysContribution
+amount: 100.0
+sender: nikolas
+---
+operation: PaysContribution
+amount: 100.0
+sender: najmeh
+---
+operation: PaysContribution
+amount: 100.0
+sender: ben
+---
+operation: PaysContribution
+amount: 50.0
+sender: finn
+---
+operation: SharedExpense
+amount: 60.0
+payer: tessa
+subject: camp power 
+tags:
+  - service
+---
+operation: SharedExpense
+amount: 91.79
+payer: kriti
+subject: lighting
+tags:
+  - asset
+  - deco
+---
+operation: SharedExpense
+amount: 274.3
+payer: torben
+subject: fabrics
+tags:
+  - asset
+  - deco
+---
+operation: SharedExpense
+amount: 62.95
+payer: torben
+subject: '?'
+tags:
+  - unknown
+  - once
+---
+operation: SharedExpense
+amount: 17.1
+payer: torben
+subject: '?'
+tags:
+  - unknown
+  - once
+---
+operation: SharedExpense
+amount: 81.68
+payer: wolf
+subject: van rental to the burn
+tags:
+  - transport
+---
+operation: SharedExpense
+amount: 275.0
+payer: wolf
+subject: rental bench and tables
+tags:
+  - camp
+  - service
+---
+operation: SharedExpense
+amount: 90.0
+payer: wolf
+subject: damaged table
+tags:
+  - camp
+  - service
+---
+operation: SharedExpense
+amount: 82.01
+payer: wolf
+subject: van rental back from burn
+tags:
+  - transport
+---
+operation: SharedExpense
+amount: 84.0
+payer: helena
+subject: transport contribution
+tags:
+  - transport
+---
+operation: SharedExpense
+amount: 57.69
+payer: wolf
+subject: fuel rented van
+tags:
+  - transport
+---
+operation: SharedExpense
+amount: 42.27
+payer: wolf
+subject: small gaz cylinder - container
+tags:
+  - kitchen
+  - asset
+---
+operation: SharedExpense
+amount: 15
+payer: wolf
+subject: small gaz cylinder - filling
+tags:
+  - kitchen
+---
+operation: SharedExpense
+amount: 1148.5
+payer: parisa
+subject: food
+tags:
+  - kitchen
+---
+operation: SharedExpense
+amount: 21.79
+payer: torben
+subject: mate kasten
+tags:
+  - kitchen
+---
+operation: SharedExpense
+amount: 5.0
+payer: najmeh
+subject: kitchen things
+tags:
+  - kitchen
+---
+operation: SharedExpense
+amount: 23.9
+payer: kriti
+subject: taxi for deco transport
+tags:
+  - transport
+---
+operation: SharedExpense
+amount: 1.71
+payer: clara
+subject: some kind of tape
+tags:
+  - camp
+  - util
+---
+operation: SharedExpense
+amount: 20.1
+payer: clara
+subject: onions
+tags:
+  - kitchen
+---
+operation: SharedExpense
+amount: 5.0
+payer: clara
+subject: fuel
+tags:
+  - transport
+---
+operation: SharedExpense
+amount: 30.0
+payer: clara
+subject: pavillon rental
+tags:
+  - camp
+  - structure
+---
+operation: SharedExpense
+amount: 12.5
+payer: helena
+subject: organic waste
+tags:
+  - camp
+---
+operation: SharedExpense
+amount: 54.19
+payer: helena
+subject: cleaning material
+tags:
+  - camp
+---
+operation: SharedExpense
+amount: 8.0
+payer: najmeh
+subject: cooking pot
+tags:
+  - kitchen
+  - asset
+---
+operation: SharedExpense
+amount: 11.3
+payer: najmeh
+subject: kitchen material
+tags:
+  - kitchen
+  - asset
+---
+operation: SharedExpense
+amount: 33.08
+payer: parisa
+subject: seeds and spices
+tags:
+  - kitchen
+---
+operation: SharedExpense
+amount: 16.91
+payer: parisa
+subject: spices
+tags:
+  - kitchen
+---
+operation: SharedExpense
+amount: 5.06
+payer: parisa
+subject: small kitchen items
+tags:
+  - kitchen
+  - asset
+---
+operation: SharedExpense
+amount: 15.06
+payer: renan
+subject: markers
+tags:
+  - util
+---
+operation: SharedExpense
+amount: 19.5
+payer: antoine
+subject: dish wash buckets
+tags:
+  - kitchen
+  - asset
+---
+operation: SharedExpense
+amount: 16.0
+payer: antoine
+subject: screws
+tags:
+  - structure
+---
+operation: SharedExpense
+amount: 3.5
+payer: antoine
+subject: winkel
+tags:
+  - structure
+---
+operation: SharedExpense
+amount: 11.0
+payer: antoine
+subject: montageband
+tags:
+  - structure
+---
+operation: SharedExpense
+amount: 14.0
+payer: antoine
+subject: whiteboard
+tags:
+  - util
+  - asset
+---
+operation: SharedExpense
+amount: 14.0
+payer: antoine
+subject: crapbox
+tags:
+  - util
+  - asset
+---
+operation: SharedExpense
+amount: 38.0
+payer: antoine
+subject: lighting material
+tags:
+  - structure
+  - asset
+---
+operation: SharedExpense
+amount: 5.5
+payer: antoine
+subject: burner lighter
+tags:
+  - kitchen
+---
+operation: SharedExpense
+amount: 12.0
+payer: antoine
+subject: nuts and bolts
+tags:
+  - structure
+---
+operation: SharedExpense
+amount: 4.0
+payer: antoine
+subject: scheibe
+tags:
+  - structure
+---
+operation: SharedExpense
+amount: 12.0
+payer: antoine
+subject: small gaz cans
+tags:
+  - kitchen
+---
+operation: SharedExpense
+amount: 48.0
+payer: antoine
+subject: wood
+tags:
+  - structure
+  - asset
+---
+operation: SharedExpense
+amount: 33.0
+payer: antoine
+subject: tarps
+tags:
+  - structure
+  - asset
+---
+operation: SharedExpense
+amount: 50.0
+payer: antoine
+subject: tarps
+tags:
+  - structure
+  - asset
+---
+operation: SharedExpense
+amount: 53.0
+payer: antoine
+subject: dome rent
+tags:
+  - structure
+  - rent
+---
+operation: SharedExpense
+amount: 44.0
+payer: baptiste
+subject: dome rent
+tags:
+  - structure
+  - rent
+---
+operation: SharedExpense
+amount: 26.0
+payer: antoine
+subject: pavillon rent
+tags:
+  - structure
+  - rent
+---
+operation: SharedExpense
+amount: 40.0
+payer: antoine
+subject: cooking set rent
+tags:
+  - rent
+---
+operation: SharedExpense
+amount: 8.5
+payer: antoine
+subject: smaller material rent
+tags:
+  - rent
+---
+operation: SharedExpense
+amount: 14.0
+payer: antoine
+subject: half gaz zylinder
+tags:
+  - kitchen
+---
+operation: TransferDebt
+amount: 100.0
+old_debitor: merve
+new_debitor: torben
+---
+operation: TransferDebt
+amount: 50.0
+old_debitor: finn
+new_debitor: renan
+---
+operation: Reimburse
+amount: 1040.0
+receiver: parisa
+---
+operation: Reimburse
+amount: 480.0
+receiver: wolf
+---
+operation: Reimburse
+amount: 260.0
+receiver: antoine
+---
+operation: Reimburse
+amount: 90.0
+receiver: torben
+---
+operation: Debt
+amount: 32.0
+creditor: najmeh
+debitor: parisa
+subject: cooking pot
+---
+operation: Debt
+amount: 1.71
+creditor: clara
+debitor: kriti
+subject: tape
+---
+operation: Debt
+amount: 16.6
+creditor: antoine
+debitor: parisa
+subject: tarp
+---
+operation: RequestContribution
+amount: 41.5
+---
+operation: TransferDebt
+amount: 41.5
+old_debitor: finn
+new_debitor: renan
+---
+operation: TransferDebt
+amount: 41.5
+old_debitor: merve
+new_debitor: torben
