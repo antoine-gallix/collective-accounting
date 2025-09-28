@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from collections import Counter, UserList
 from dataclasses import dataclass, field
 from operator import attrgetter
-from typing import Self
+from typing import Collection, Iterable, Mapping, Self
 
 import funcy
 
@@ -126,11 +126,31 @@ class Expenses(UserList[SharedExpense]):
             start=Money(0),
         )
 
-    def filter(self, tag: str | None) -> Self:
-        if tag is None:
-            return self.__class__(funcy.lfilter(lambda o: o.tags == tuple(), self))
-        else:
-            return self.__class__(funcy.lfilter(lambda o: tag in o.tags, self))
+    def filter(self, has_tag: str | None | Collection[str], negate=False) -> Self:
+        """Select a subset of expenses
+
+        has_tags:
+            string: select expenses with given tag
+            list or tuple: select expenses all tags in the collection
+        """
+        match has_tag:
+            case None:
+
+                def pred(o: SharedExpense) -> bool:
+                    return len(o.tags) == 0
+
+            case str(tag):
+
+                def pred(o: SharedExpense) -> bool:
+                    return tag in o.tags
+            case tuple(tags) | list(tags):
+
+                def pred(o: SharedExpense) -> bool:
+                    return all((tag in o.tags) for tag in tags)
+
+        if negate:
+            pred = funcy.complement(pred)  # type:ignore
+        return self.__class__(funcy.lfilter(pred, self))
 
     def tags(self, unique=True) -> list[str]:
         tags = funcy.flatten(expense.tags for expense in self)

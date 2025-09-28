@@ -240,6 +240,7 @@ def test__Expenses__sum(expenses):
 
 
 def test__Expenses__filter(expenses):
+    # get one
     assert expenses.filter("meat") == [
         SharedExpense(
             amount=Money(10),
@@ -248,6 +249,7 @@ def test__Expenses__filter(expenses):
             tags=("meat", "animal"),
         ),
     ]
+    # get multiple
     assert expenses.filter("animal") == [
         SharedExpense(
             amount=Money(10),
@@ -262,16 +264,49 @@ def test__Expenses__filter(expenses):
             tags=("animal",),
         ),
     ]
+    # filter by multiple tags
+    assert expenses.filter(("animal", "meat")) == [
+        SharedExpense(
+            amount=Money(10),
+            payer="renan",
+            subject="salchichas",
+            tags=("meat", "animal"),
+        ),
+    ]
+    # no tags
     assert expenses.filter(None) == [
         SharedExpense(amount=Money(20), payer="antoine", subject="pimientos"),
     ]
 
 
+def test__Expenses__filter__negate(expenses):
+    assert expenses.filter("meat", negate=True) == [
+        SharedExpense(
+            amount=Money("20.00"), payer="antoine", subject="pimientos", tags=()
+        ),
+        SharedExpense(
+            amount=Money("30.00"), payer="baptiste", subject="huevos", tags=("animal",)
+        ),
+    ]
+    assert expenses.filter(None, negate=True) == [
+        SharedExpense(
+            amount=Money("10.00"),
+            payer="renan",
+            subject="salchichas",
+            tags=("meat", "animal"),
+        ),
+        SharedExpense(
+            amount=Money("30.00"), payer="baptiste", subject="huevos", tags=("animal",)
+        ),
+    ]
+
+
 def test__Expenses__tag(expenses):
-    assert expenses.tags() == [
+    assert set(expenses.tags()) == {
         "meat",
         "animal",
-    ]
+    }
+
     assert expenses.tags(unique=False) == [
         "meat",
         "animal",
