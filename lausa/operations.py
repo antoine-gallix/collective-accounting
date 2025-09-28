@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections import UserList
+from collections import Counter, UserList
 from dataclasses import dataclass, field
 from operator import attrgetter
 from typing import Self
@@ -135,6 +135,9 @@ class Expenses(UserList[SharedExpense]):
     def tags(self, unique=True) -> list[str]:
         tags = funcy.flatten(expense.tags for expense in self)
         return list(set(tags)) if unique else list(tags)
+
+    def tag_count(self) -> Mapping:
+        return Counter(self.tags(unique=False))
 
 
 @dataclass
