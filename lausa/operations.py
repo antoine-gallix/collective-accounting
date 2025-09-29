@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from collections import Counter, UserList
 from dataclasses import dataclass, field
+from operator import attrgetter
 from typing import Mapping, cast
 
 import funcy
