@@ -347,6 +347,15 @@ def comparative_expense_view(expenses, tag):
     )
 
 
+def tag_count_table(expenses):
+    table = Table.grid(padding=(0, 1))
+    for tag, count in sorted(
+        expenses.tag_count().items(), key=itemgetter(1), reverse=True
+    ):
+        table.add_row(tag, str(count))
+    return table
+
+
 class CenteredPanel(Panel):
     def __init__(
         self,

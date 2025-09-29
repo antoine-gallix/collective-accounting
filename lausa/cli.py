@@ -94,7 +94,7 @@ def list_expenses(tag, no_tag):
 def list_tags():
     """List tags found in ledger expenses"""
     expenses = Ledger.load_from_file().expenses
-    for tag, count in expenses.tag_count().items():
+    print(tag_count_table(expenses))
         print(tag, count)
 
 
