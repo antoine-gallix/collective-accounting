@@ -317,7 +317,7 @@ def expense_view(expenses):
     return Group(expense_summary(expenses), Rule(), expense_table(expenses))
 
 
-def relative_expense_summary(filtered_expenses, expenses):
+def comparative_expense_summary(filtered_expenses, expenses):
     return Group(
         Text.assemble(
             "count: ",
@@ -335,13 +335,13 @@ def relative_expense_summary(filtered_expenses, expenses):
     )
 
 
-def relative_expense_view(expenses, tag):
+def comparative_expense_view(expenses, tag):
     filtered_expenses = expenses.filter(tag)
     return Group(
         Text.assemble(
             "tag filter: ", Text("no tag" if tag is None else tag, style="magenta")
         ),
-        relative_expense_summary(filtered_expenses, expenses),
+        comparative_expense_summary(filtered_expenses, expenses),
         Rule(),
         expense_table(filtered_expenses),
     )

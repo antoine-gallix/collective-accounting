@@ -6,6 +6,8 @@ from rich import print
 from rich.live import Live
 
 from .display import (
+    comparative_expense_view,
+    expense_groups_comparison,
     expense_view,
     file_modification_timestamp,
     ledger_view,
@@ -81,9 +83,9 @@ def list_expenses(tag, no_tag):
     """
     expenses = Ledger.load_from_file().expenses
     if no_tag:
-        print(relative_expense_view(expenses, None))
+        print(comparative_expense_view(expenses, None))
     elif tag is not None:
-        print(relative_expense_view(expenses, tag))
+        print(comparative_expense_view(expenses, tag))
     else:
         print(expense_view(expenses))
 
