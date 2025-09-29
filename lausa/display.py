@@ -1,4 +1,6 @@
 import pathlib
+from itertools import combinations
+from operator import itemgetter
 
 import arrow
 import funcy
@@ -13,11 +15,13 @@ from rich.text import Text
 
 from .account import Name
 from .ledger import Ledger
+from .logging import logger
 from .money import Money
 from .operations import (
     AddAccount,
     AddPot,
     Debt,
+    Expenses,
     PaysContribution,
     Reimburse,
     RemoveAccount,
@@ -281,7 +285,10 @@ def operation_table(operations):
     return table
 
 
-def expense_table(expenses: list[SharedExpense]):
+# ------------------------ Expenses ------------------------
+
+
+def _expense_table(expenses: Expenses):
     if not expenses:
         return Text("no expense to display", style="red")
     table = Table()
@@ -299,7 +306,7 @@ def expense_table(expenses: list[SharedExpense]):
     return table
 
 
-def expense_summary(expenses):
+def _expense_summary(expenses):
     return Group(
         Text.assemble("count: ", (str(len(expenses)), "blue")),
         Text.assemble(
@@ -314,37 +321,91 @@ def expense_summary(expenses):
 
 
 def expense_view(expenses):
-    return Group(expense_summary(expenses), Rule(), expense_table(expenses))
+    return Group(_expense_summary(expenses), Rule(), _expense_table(expenses))
 
 
-def comparative_expense_summary(filtered_expenses, expenses):
+def _filtered_expense_summary(filtered_expenses, expenses):
+    count_full = len(expenses)
+    count_filtered = len(filtered_expenses)
+    sum_full = expenses.sum()
+    sum_filtered = filtered_expenses.sum()
     return Group(
         Text.assemble(
             "count: ",
-            (str(len(filtered_expenses)), "blue"),
+            (str(count_filtered), "blue"),
             "/",
-            (str(len(expenses)), "green"),
+            (str(count_full), "green"),
+            " (",
+            format(count_filtered / count_full, ".0%"),
+            ")",
         ),
         Text.assemble(
-            "total: ",
-            "count: ",
-            (str(filtered_expenses.sum()), "blue"),
+            "sum: ",
+            (str(sum_filtered), "blue"),
             "/",
-            (str(expenses.sum()), "green"),
+            (str(sum_full), "green"),
+            " (",
+            format(float(sum_filtered) / float(sum_full)),
+            ".0%",
         ),
+        ")",
     )
 
 
-def comparative_expense_view(expenses, tag):
-    filtered_expenses = expenses.filter(tag)
+def filtered_expense_view(expenses, tag):
+    if tag is None:
+        filtered_expenses = expenses.select_has_no_tag()
+        filter_name = "no tag"
+    else:
+        filtered_expenses = expenses.select_has_tag(tag)
+        filter_name = tag
     return Group(
-        Text.assemble(
-            "tag filter: ", Text("no tag" if tag is None else tag, style="magenta")
-        ),
-        comparative_expense_summary(filtered_expenses, expenses),
+        Text.assemble("tag filter: ", Text(filter_name, style="magenta")),
+        _filtered_expense_summary(filtered_expenses, expenses),
         Rule(),
-        expense_table(filtered_expenses),
+        _expense_table(filtered_expenses),
     )
+
+
+def expense_groups_comparison(expenses, tags):
+    tag_groups = {tag: expenses.select_has_tag(tag) for tag in tags}
+    # ---
+    logger.debug("checking for intersection")
+    intersect = False
+    for (tag_left, expenses_left), (tag_right, expenses_right) in combinations(
+        tag_groups.items(), 2
+    ):
+        intersection = set(map(id, expenses_left)) & set(map(id, expenses_right))
+        if intersection:
+            logger.warning(
+                f"{len(intersection)} expenses have both tags {tag_left} and {tag_right}"
+            )
+            for expense_id in intersection:
+                logger.warning(expenses.select_by_id(expense_id))
+            intersect = True
+    if intersect:
+        logger.warning("overlap in tag groups, aborting comparison")
+        return
+    # leftover group
+    tag_groups["..."] = expenses.select_has_none_of_tags(*tags)
+
+    total_sum = expenses.sum()
+    summary_table = Table()
+    summary_table.add_column("tag")
+    summary_table.add_column("count")
+    summary_table.add_column("sum")
+    summary_table.add_column("relative sum")
+    for tag, group in tag_groups.items():
+        sum_ = group.sum()
+        summary_table.add_row(
+            tag,
+            str(len(group)),
+            str(sum_),
+            format(float(sum_) / float(total_sum), ".1%"),
+        )
+
+    leftover_group_tags = tag_count_table(tag_groups["..."])
+    return Group(summary_table, Text("tags in remaining expenses"), leftover_group_tags)
 
 
 def tag_count_table(expenses):

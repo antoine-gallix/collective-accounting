@@ -1,4 +1,5 @@
 import time
+from itertools import combinations
 from operator import xor
 
 import click
@@ -6,14 +7,14 @@ from rich import print
 from rich.live import Live
 
 from .display import (
-    comparative_expense_view,
     expense_groups_comparison,
     expense_view,
     file_modification_timestamp,
+    filtered_expense_view,
     ledger_view,
     operation_table,
-    relative_expense_view,
     state_view,
+    tag_count_table,
 )
 from .ledger import Ledger
 from .logging import logger
@@ -83,9 +84,9 @@ def list_expenses(tag, no_tag):
     """
     expenses = Ledger.load_from_file().expenses
     if no_tag:
-        print(comparative_expense_view(expenses, None))
+        print(filtered_expense_view(expenses, None))
     elif tag is not None:
-        print(comparative_expense_view(expenses, tag))
+        print(filtered_expense_view(expenses, tag))
     else:
         print(expense_view(expenses))
 
@@ -95,7 +96,14 @@ def list_tags():
     """List tags found in ledger expenses"""
     expenses = Ledger.load_from_file().expenses
     print(tag_count_table(expenses))
-        print(tag, count)
+
+
+@expenses.command("compare")
+@click.argument("tags", type=click.STRING, nargs=-1)
+def compare_expenses(tags):
+    """Compare expenses"""
+    expenses = Ledger.load_from_file().expenses
+    print(expense_groups_comparison(expenses, tags))
 
 
 # ------------------------ operations ------------------------
