@@ -1,3 +1,4 @@
+from funcy import lpluck_attr, pluck_attr
 from pytest import fixture, raises
 
 from lausa.account import Account, LedgerState, PositiveAccount
@@ -231,73 +232,52 @@ def expenses():
                 subject="huevos",
                 tags=("animal",),
             ),
+            SharedExpense(
+                amount=Money(15), payer="antoine", subject="vegan steak", tags=("meat",)
+            ),
         ]
     )
 
 
+def test__SharedExpense__has_tag():
+    expense = SharedExpense(
+        amount=Money(30),
+        payer="baptiste",
+        subject="huevos",
+        tags=("animal",),
+    )
+    assert expense.has_tag("animal")
+    assert expense.has_tag("peluche") is False
+
+
 def test__Expenses__sum(expenses):
-    assert expenses.sum() == Money(60)
+    assert expenses.sum() == Money(75)
 
 
-def test__Expenses__filter(expenses):
-    # get one
-    assert expenses.filter("meat") == [
-        SharedExpense(
-            amount=Money(10),
-            payer="renan",
-            subject="salchichas",
-            tags=("meat", "animal"),
-        ),
-    ]
-    # get multiple
-    assert expenses.filter("animal") == [
-        SharedExpense(
-            amount=Money(10),
-            payer="renan",
-            subject="salchichas",
-            tags=("meat", "animal"),
-        ),
-        SharedExpense(
-            amount=Money(30),
-            payer="baptiste",
-            subject="huevos",
-            tags=("animal",),
-        ),
-    ]
-    # filter by multiple tags
-    assert expenses.filter(("animal", "meat")) == [
-        SharedExpense(
-            amount=Money(10),
-            payer="renan",
-            subject="salchichas",
-            tags=("meat", "animal"),
-        ),
-    ]
-    # no tags
-    assert expenses.filter(None) == [
-        SharedExpense(amount=Money(20), payer="antoine", subject="pimientos"),
+def test__Expenses__select_has_no_tag(expenses):
+    assert lpluck_attr("subject", expenses.select_has_no_tag()) == [
+        "pimientos",
     ]
 
 
-def test__Expenses__filter__negate(expenses):
-    assert expenses.filter("meat", negate=True) == [
-        SharedExpense(
-            amount=Money("20.00"), payer="antoine", subject="pimientos", tags=()
-        ),
-        SharedExpense(
-            amount=Money("30.00"), payer="baptiste", subject="huevos", tags=("animal",)
-        ),
+def test__Expenses__select_has_tag(expenses):
+    assert lpluck_attr("subject", expenses.select_has_tag("meat")) == [
+        "salchichas",
+        "vegan steak",
     ]
-    assert expenses.filter(None, negate=True) == [
-        SharedExpense(
-            amount=Money("10.00"),
-            payer="renan",
-            subject="salchichas",
-            tags=("meat", "animal"),
-        ),
-        SharedExpense(
-            amount=Money("30.00"), payer="baptiste", subject="huevos", tags=("animal",)
-        ),
+
+
+def test__Expenses__select_has_all_tags(expenses):
+    assert lpluck_attr("subject", expenses.select_has_all_tags("meat", "animal")) == [
+        "salchichas",
+    ]
+
+
+def test__Expenses__select_has_none_of_tags(expenses):
+    assert lpluck_attr(
+        "subject", expenses.select_has_none_of_tags("meat", "animal")
+    ) == [
+        "pimientos",
     ]
 
 
@@ -306,9 +286,3 @@ def test__Expenses__tag(expenses):
         "meat",
         "animal",
     }
-
-    assert expenses.tags(unique=False) == [
-        "meat",
-        "animal",
-        "animal",
-    ]

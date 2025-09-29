@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 from collections import Counter, UserList
 from dataclasses import dataclass, field
-from operator import attrgetter
-from typing import Collection, Iterable, Mapping, Self
+from typing import Mapping, cast
 
 import funcy
 
@@ -118,46 +117,60 @@ class SharedExpense(AccountingOperation):
         else:
             state.create_debt(amount=self.amount, creditors=[self.payer], debitors=None)
 
+    def has_tag(self, tag):
+        return tag in self.tags
+
 
 class Expenses(UserList[SharedExpense]):
+    # -------- selection
+
+    def _filter(self, filter_):
+        return self.__class__(funcy.lfilter(filter_, self))
+
+    def select_has_no_tag(self):
+        return self._filter(funcy.complement(attrgetter("tags")))
+
+    def select_has_tag(self, tag):
+        return self._filter(funcy.rpartial(SharedExpense.has_tag, tag))
+
+    def select_has_all_tags(self, *tags):
+        return self._filter(
+            funcy.all_fn(*(funcy.rpartial(SharedExpense.has_tag, tag) for tag in tags))
+        )
+
+    def select_has_none_of_tags(self, *tags):
+        return self._filter(
+            funcy.all_fn(
+                *(
+                    funcy.complement(funcy.rpartial(SharedExpense.has_tag, tag))
+                    for tag in tags
+                )
+            )
+        )
+
+    def select_by_id(self, id_: int):
+        selection = funcy.select(lambda expense: id(expense) == id_, self)
+        selection = cast(list, selection)  # reassure typing
+        if len(selection) == 1:
+            return selection[0]
+        else:
+            raise RuntimeError(f"selection returned {len(selection)} matches")
+
+    # -------- tags
+
+    def tags(self) -> list[str]:
+        return funcy.lflatten(expense.tags for expense in self)
+
+    def tag_count(self) -> Mapping:
+        return Counter(funcy.flatten(expense.tags for expense in self))
+
+    # -------- aggregation
+
     def sum(self) -> Money:
         return sum(
             funcy.map(attrgetter("amount"), self),
             start=Money(0),
         )
-
-    def filter(self, has_tag: str | None | Collection[str], negate=False) -> Self:
-        """Select a subset of expenses
-
-        has_tags:
-            string: select expenses with given tag
-            list or tuple: select expenses all tags in the collection
-        """
-        match has_tag:
-            case None:
-
-                def pred(o: SharedExpense) -> bool:
-                    return len(o.tags) == 0
-
-            case str(tag):
-
-                def pred(o: SharedExpense) -> bool:
-                    return tag in o.tags
-            case tuple(tags) | list(tags):
-
-                def pred(o: SharedExpense) -> bool:
-                    return all((tag in o.tags) for tag in tags)
-
-        if negate:
-            pred = funcy.complement(pred)  # type:ignore
-        return self.__class__(funcy.lfilter(pred, self))
-
-    def tags(self, unique=True) -> list[str]:
-        tags = funcy.flatten(expense.tags for expense in self)
-        return list(set(tags)) if unique else list(tags)
-
-    def tag_count(self) -> Mapping:
-        return Counter(self.tags(unique=False))
 
 
 @dataclass
