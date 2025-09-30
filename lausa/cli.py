@@ -143,6 +143,17 @@ def add_user(name):
 
 
 @record.command
+@click.argument("name", type=click.STRING)
+def remove_user(name):
+    """Removes a user from the ledger"""
+    try:
+        with Ledger.edit() as ledger:
+            ledger.remove_account(name)
+    except RuntimeError as error:
+        logger.error(error)
+
+
+@record.command
 def add_pot():
     """Setup shared pot for ledger"""
     try:

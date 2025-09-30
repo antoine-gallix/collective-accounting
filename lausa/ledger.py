@@ -19,6 +19,7 @@ from .operations import (
     Operation,
     PaysContribution,
     Reimburse,
+    RemoveAccount,
     RequestContribution,
     SharedExpense,
     Transfer,
@@ -113,6 +114,9 @@ class Ledger:
 
     def add_account(self, name):
         self._record(AddAccount(name))
+
+    def remove_account(self, name):
+        self._record(RemoveAccount(name))
 
     def add_pot(self):
         self._record(AddPot())
