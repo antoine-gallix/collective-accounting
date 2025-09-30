@@ -182,19 +182,19 @@ def record_shared_expense(amount, name, subject):
 
 @record.command("transfer")
 @click.argument("amount", type=click.FLOAT)
-@click.argument("by", type=click.STRING)
-@click.argument("to", type=click.STRING)
-def record_transfer(amount, by, to):
+@click.argument("sender", type=click.STRING)
+@click.argument("receiver", type=click.STRING)
+def record_transfer(amount, sender, receiver):
     """Record money transfered from a user to another
 
     Rebalance the ledger so to share the cost of AMOUNT paid by NAME
 
     Example:
 
-    > accountant record-transfer 10 baptiste antoine
+    > accountant record transfer 10 baptiste antoine
     """
     with Ledger.edit() as ledger:
-        ledger.record_transfer(amount=amount, by=by, to=to)
+        ledger.record_transfer(amount=amount, sender=sender, receiver=receiver)
 
 
 @record.command("transfer-debt")
