@@ -335,9 +335,6 @@ def _filtered_expense_summary(filtered_expenses, expenses):
             (str(count_filtered), "blue"),
             "/",
             (str(count_full), "green"),
-            " (",
-            format(count_filtered / count_full, ".0%"),
-            ")",
         ),
         Text.assemble(
             "sum: ",
@@ -345,10 +342,9 @@ def _filtered_expense_summary(filtered_expenses, expenses):
             "/",
             (str(sum_full), "green"),
             " (",
-            format(float(sum_filtered) / float(sum_full)),
-            ".0%",
+            format(float(sum_filtered) / float(sum_full), ".0%"),
+            ")",
         ),
-        ")",
     )
 
 
