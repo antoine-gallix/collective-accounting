@@ -383,7 +383,8 @@ def expense_groups_comparison(expenses, tags):
         logger.warning("overlap in tag groups, aborting comparison")
         return
     # leftover group
-    tag_groups["..."] = expenses.select_has_none_of_tags(*tags)
+    if leftover_group := expenses.select_has_none_of_tags(*tags):
+        tag_groups["..."] = leftover_group
 
     total_sum = expenses.sum()
     summary_table = Table()
@@ -396,12 +397,16 @@ def expense_groups_comparison(expenses, tags):
         summary_table.add_row(
             tag,
             str(len(group)),
-            str(sum_),
+            money_display(sum_),
             format(float(sum_) / float(total_sum), ".1%"),
         )
-
-    leftover_group_tags = tag_count_table(tag_groups["..."])
-    return Group(summary_table, Text("tags in remaining expenses"), leftover_group_tags)
+    if leftover_group:
+        leftover_group_tags = tag_count_table(tag_groups["..."])
+        return Group(
+            summary_table, Text("\ntags in remaining expenses:"), leftover_group_tags
+        )
+    else:
+        return summary_table
 
 
 def tag_count_table(expenses):
