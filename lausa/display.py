@@ -1,12 +1,13 @@
 import pathlib
 from itertools import combinations
 from operator import itemgetter
+from typing import Collection
 
 import arrow
 import funcy
 from rich.align import Align
 from rich.columns import Columns
-from rich.console import Group
+from rich.console import Group, RenderableType
 from rich.layout import Layout
 from rich.panel import Panel
 from rich.rule import Rule
@@ -255,6 +256,7 @@ def operation_description(operation) -> Text:
 
 
 def ledger_summary_view(ledger):
+    """View stats about the ledger"""
     table = Table.grid(padding=(0, 2))
     table.add_row("users", Text(str(len(ledger.state.user_accounts)), style="blue"))
     table.add_row(
@@ -275,6 +277,7 @@ def ledger_summary_view(ledger):
 
 
 def operation_table(operations):
+    """View of a set of operation as a grid"""
     table = Table.grid(padding=(0, 2))
     for i, operation in reversed(list(enumerate(operations, start=1))):
         table.add_row(
@@ -288,7 +291,8 @@ def operation_table(operations):
 # ------------------------ Expenses ------------------------
 
 
-def _expense_table(expenses: Expenses):
+def _expense_table(expenses: Expenses) -> RenderableType:
+    """View of a collection of expenses in a grid"""
     if not expenses:
         return Text("no expense to display", style="red")
     table = Table()
@@ -306,7 +310,8 @@ def _expense_table(expenses: Expenses):
     return table
 
 
-def _expense_summary(expenses):
+def _expense_summary(expenses: Expenses) -> RenderableType:
+    """Stats of a collection of expenses"""
     return Group(
         Text.assemble("count: ", (str(len(expenses)), "blue")),
         Text.assemble(
@@ -320,11 +325,13 @@ def _expense_summary(expenses):
     )
 
 
-def expense_view(expenses):
+def expense_view(expenses: Expenses) -> RenderableType:
+    """View of a set of expenses"""
     return Group(_expense_summary(expenses), Rule(), _expense_table(expenses))
 
 
-def _filtered_expense_summary(filtered_expenses, expenses):
+def _filtered_expense_summary(filtered_expenses: Expenses, expenses: Expenses):
+    """Stats of a subset of expenses"""
     count_full = len(expenses)
     count_filtered = len(filtered_expenses)
     sum_full = expenses.sum()
@@ -348,7 +355,8 @@ def _filtered_expense_summary(filtered_expenses, expenses):
     )
 
 
-def filtered_expense_view(expenses, tag):
+def filtered_expense_view(expenses: Expenses, tag: str) -> RenderableType:
+    """View of a subset of expenses, filtered with a tag"""
     if tag is None:
         filtered_expenses = expenses.select_has_no_tag()
         filter_name = "no tag"
@@ -363,7 +371,13 @@ def filtered_expense_view(expenses, tag):
     )
 
 
-def expense_groups_comparison(expenses, tags):
+def expense_groups_comparison(
+    expenses: Expenses, tags: Collection[str]
+) -> RenderableType:
+    """Compare group of expenses via tags.
+
+    tags: a collection of tags
+    """
     tag_groups = {tag: expenses.select_has_tag(tag) for tag in tags}
     # ---
     logger.debug("checking for intersection")
@@ -410,6 +424,7 @@ def expense_groups_comparison(expenses, tags):
 
 
 def tag_count_table(expenses):
+    """Display a tag count dict as a grid"""
     table = Table.grid(padding=(0, 1))
     for tag, count in sorted(
         expenses.tag_count().items(), key=itemgetter(1), reverse=True
@@ -419,6 +434,8 @@ def tag_count_table(expenses):
 
 
 class CenteredPanel(Panel):
+    """A panel with centered content"""
+
     def __init__(
         self,
         content,
@@ -437,11 +454,20 @@ class CenteredPanel(Panel):
 
 
 def ledger_view():
+    """Full screen view of a ledger.
+
+    Displays:
+        - ledger stats
+        - ledger file stamps
+        - latest operations
+        - pot state
+        - user state
+    """
     try:
         ledger = Ledger.load_from_file()
     except FileNotFoundError:
         return Text("no ledger file", style="red")
-
+    # --------
     screen = Layout()
     screen.split_column(
         Layout(name="main"),
@@ -457,6 +483,8 @@ def ledger_view():
     screen.get("left").split_column(  # type:ignore
         Layout(name="summary", size=5), Layout(name="accounts")
     )
+    # --------
+
     screen.get("summary").update(  # type:ignore
         CenteredPanel(ledger_summary_view(ledger), title="Summary")
     )
