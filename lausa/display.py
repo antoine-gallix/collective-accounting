@@ -355,7 +355,7 @@ def _filtered_expense_summary(filtered_expenses: Expenses, expenses: Expenses):
     )
 
 
-def filtered_expense_view(expenses: Expenses, tag: str) -> RenderableType:
+def filtered_expense_view(expenses: Expenses, tag: str | None) -> RenderableType:
     """View of a subset of expenses, filtered with a tag"""
     if tag is None:
         filtered_expenses = expenses.select_has_no_tag()
@@ -373,7 +373,7 @@ def filtered_expense_view(expenses: Expenses, tag: str) -> RenderableType:
 
 def expense_groups_comparison(
     expenses: Expenses, tags: Collection[str]
-) -> RenderableType:
+) -> RenderableType | None:
     """Compare group of expenses via tags.
 
     tags: a collection of tags
