@@ -82,7 +82,10 @@ class Ledger:
         ledger = cls()
         for operation in operations:
             logger.debug(f"apply operation: {operation}")
-            ledger.apply(operation)
+            try:
+                ledger.apply(operation)
+            except RuntimeError as e:
+                raise RuntimeError(f"applying operation failed: {operation}") from e
         logger.debug("ledger loaded")
         ledger._repr_string = ledger.LEDGER_FILE
         return ledger
