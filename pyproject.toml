@@ -17,7 +17,7 @@ dependencies = [
 dev = ["pytest>=8.4.1", "pytest-mock>=3.14.1"]
 
 [project.scripts]
-accountant = "lausa.cli:main"
+lausa = "lausa.cli:main"
 
 [tool.uv]
 package = true # required for scripts to be installed
