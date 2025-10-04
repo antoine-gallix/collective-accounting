@@ -1,5 +1,4 @@
 import time
-from itertools import combinations
 from operator import xor
 
 import click
@@ -51,11 +50,12 @@ def watch():
 @click.option("--color/--no-color", default=True)
 def accounts(color):
     """Print the state of the accounts"""
+    ledger = Ledger.load_from_file()
     if color:
-        print(state_view(Ledger.load_from_file()))
+        print(state_view(ledger))
     else:
         for name, account in sorted(
-            Ledger.load_from_file().state.user_accounts.items(),
+            ledger.state.user_accounts.items(),
             key=lambda item: item[1].diff,
             reverse=True,
         ):
