@@ -268,11 +268,7 @@ def ledger_summary_view(ledger):
     table.add_row(
         "expenses",
         Text(
-            str(
-                -sum(
-                    (account.balance for account in ledger.state.user_accounts.values())
-                )
-            ),
+            str(ledger.expenses.sum()),
             style="yellow",
         ),
     )
