@@ -102,13 +102,16 @@ def pot_state_table(ledger):
 
 
 def accounts_table(ledger):
-    table = Table.grid(padding=(0, 2), expand=True)
+    table = Table()
+    table.add_column("name")
+    table.add_column("difference")
+    table.add_column("balance")
     for name, account in sorted(
         ledger.state.user_accounts.items(),
         key=lambda item: item[1].diff,
         reverse=True,
     ):
-        table.add_row(name, diff_style(account.diff))
+        table.add_row(name, diff_style(account.diff), diff_style(account.balance))
     return table
 
 
